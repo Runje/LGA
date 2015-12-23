@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    >
+
+    <TextView
+        android:id="@+id/text_name"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:singleLine="true"
+        android:text="@string/name"
+        android:textColor="@color/text_list"/>
+
+    <TextView
+        android:id="@+id/text_costs"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:text="€"
+        android:textColor="@color/text_list"/>
+
+    <TextView
+        android:id="@+id/text_who"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:text="@string/short_executor"
+        android:textColor="@color/text_list"/>
+
+    <TextView
+        android:id="@+id/text_date"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:text="@string/day"
+        android:textColor="@color/text_list"/>
+
+    <TextView
+        android:id="@+id/text_category"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:text="@string/category"
+        android:textColor="@color/text_list"
+        android:visibility="gone"/>
+
+    <TextView
+        android:id="@+id/text_user"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:text="@string/user"
+        android:textColor="@color/text_list"/>
+
+</merge>
