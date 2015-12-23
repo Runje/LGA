@@ -3,7 +3,6 @@ package com.example.thomas.lga.Activities;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.support.v4.app.DialogFragment;
-import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
@@ -226,10 +225,8 @@ public class SyncFragment extends DialogFragment
     public void onResume()
     {
         super.onResume();
-        DisplayMetrics metrics = getResources().getDisplayMetrics();
-        int width = metrics.widthPixels;
-        int height = metrics.heightPixels;
-        getDialog().getWindow().setLayout((6 * width) / 7, (4 * height) / 5);
+        Utilities.adaptDialogSize(getDialog(), 6f / 7, 4f / 5);
+
         //getDialog().getWindow().setLayout(WindowManager.LayoutParams.FILL_PARENT, WindowManager.LayoutParams.FILL_PARENT);
         checkConnectionStatus();
     }

@@ -35,7 +35,7 @@ public class PINDialog
         final EditText editPin = (EditText) layout.findViewById(R.id.edit_pin);
         builder.setView(layout);
         builder.setTitle(R.string.enter_pin);
-        builder.setNeutralButton(R.string.use_demo_data, new DialogInterface.OnClickListener()
+        builder.setNeutralButton(R.string.demo, new DialogInterface.OnClickListener()
         {
             @Override
             public void onClick(DialogInterface dialog, int which)
@@ -61,6 +61,7 @@ public class PINDialog
 
         final AlertDialog dialog = builder.create();
         dialog.show();
+        Utilities.adaptDialogSize(dialog, 6 / 7f, 0.5f);
         Utilities.clickOn(editPin);
 
 

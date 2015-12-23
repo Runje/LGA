@@ -1,11 +1,13 @@
 package com.example.thomas.lga.Activities;
 
+import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Environment;
 import android.os.SystemClock;
+import android.util.DisplayMetrics;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.DatePicker;
@@ -192,5 +194,13 @@ public class Utilities
     {
         Context context = convertView.getContext();
         convertView.setBackgroundColor((position % 2 == 0) ? context.getResources().getColor(R.color.background_list) : context.getResources().getColor(R.color.background_list2));
+    }
+
+    public static void adaptDialogSize(Dialog dialog, float widthFactor, float heightFactor)
+    {
+        DisplayMetrics metrics = dialog.getContext().getResources().getDisplayMetrics();
+        int width = metrics.widthPixels;
+        int height = metrics.heightPixels;
+        dialog.getWindow().setLayout((int) (widthFactor * width), (int) (heightFactor * height));
     }
 }

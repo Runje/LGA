@@ -51,7 +51,7 @@
     <string name="action_import">Importieren</string>
     <string name="choose_import_file">Wähle die Datei zum importieren aus</string>
     <string name="enter_pin">Geben Sie Ihren PIN ein</string>
-    <string name="use_demo_data">Verwende Demo Datenbank</string>
+    <string name="demo">Demo</string>
     <string name="wrong_pin">Falscher Pin</string>
     <string name="error_costs">Fehler bei den Kosten</string>
     <string name="executor">Ausführender</string>
