@@ -119,7 +119,8 @@ public class Utilities
             File sd = Environment.getExternalStorageDirectory();
             Intent intent = new Intent(Intent.ACTION_SENDTO);
             intent.setType("text/plain");
-            intent.putExtra(Intent.EXTRA_SUBJECT, "LGA BACKUP " + DateTime.now().toString("yyyy.MM.dd"));
+            String date = DateTime.now().toString("yyyy.MM.dd");
+            intent.putExtra(Intent.EXTRA_SUBJECT, "LGA BACKUP " + date);
             intent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(file));
             //intent.putExtra(Intent.EXTRA_TEXT, "test");
             if (email != null)
@@ -168,7 +169,7 @@ public class Utilities
 
     public static Expenses createExpensesFromStandingOrder(StandingOrder order, DateTime date, String id)
     {
-        return new Expenses(order.getWho(), order.getCosts(), order.getName(), order.getCategory(), order.getUser(), date, true, id, id);
+        return new Expenses(order.getWho(), order.getCosts(), order.getName().trim(), order.getCategory().trim(), order.getUser(), date, true, id, id);
     }
 
     public static void clickOn(final View view)

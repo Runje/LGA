@@ -2,7 +2,6 @@ package com.example.thomas.lga.Network.Messages;
 
 import com.example.thomas.lga.Network.ByteConverter;
 import com.example.thomas.lga.Network.Message;
-import com.example.thomas.lga.Network.MessageParser;
 
 import org.joda.time.DateTime;
 
@@ -11,21 +10,21 @@ import java.nio.ByteBuffer;
 /**
  * Created by Thomas on 13.12.2015.
  */
-public class RequestSyncMessage extends Message
+public class RequestMessage extends Message
 {
     protected DateTime date;
     protected boolean authorized;
 
-    public RequestSyncMessage(DateTime date, boolean authorized)
+    public RequestMessage(DateTime date, boolean authorized, int id)
     {
-        id = MessageParser.Request_Sync1;
+        this.id = id;
         this.date = date;
         this.authorized = authorized;
     }
 
-    public RequestSyncMessage(ByteBuffer buffer)
+    public RequestMessage(ByteBuffer buffer, int id)
     {
-        id = MessageParser.Request_Sync1;
+        this.id = id;
         this.date = new DateTime(buffer.getLong());
         this.authorized = ByteConverter.byteToBoolean(buffer.get());
     }
@@ -53,6 +52,6 @@ public class RequestSyncMessage extends Message
     @Override
     public String toString()
     {
-        return "Request Sync Message: " + date.toString();
+        return "Request Sync Message: " + id + ", " + date.toString();
     }
 }

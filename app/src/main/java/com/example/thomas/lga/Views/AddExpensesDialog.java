@@ -50,8 +50,9 @@ public class AddExpensesDialog
     public AddExpensesDialog(Context context)
     {
         this.context = context;
-        expenses = new Expenses(Installation.id(context));
-        standingOrder = new StandingOrder();
+        String myId = Installation.id(context);
+        expenses = new Expenses(myId);
+        standingOrder = new StandingOrder(myId);
     }
 
     public AddExpensesDialog(Context context, Expenses expenses)
@@ -59,7 +60,7 @@ public class AddExpensesDialog
         // Show overview
         this(context);
         this.expenses = expenses;
-        standingOrder = new StandingOrder();
+        standingOrder = new StandingOrder(Installation.id(context));
     }
 
     public void show(boolean allowOnlyCostChange)

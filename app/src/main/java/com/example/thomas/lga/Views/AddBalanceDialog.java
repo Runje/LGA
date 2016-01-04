@@ -17,6 +17,7 @@ import com.example.thomas.lga.Activities.Utilities;
 import com.example.thomas.lga.Database.SQLiteFinanceHandler;
 import com.example.thomas.lga.Finances.Balance;
 import com.example.thomas.lga.Finances.BankAccount;
+import com.example.thomas.lga.Installation;
 import com.example.thomas.lga.R;
 
 import org.joda.time.DateTime;
@@ -45,7 +46,7 @@ public class AddBalanceDialog
     public AddBalanceDialog(Context context, BankAccount account)
     {
         this.context = context;
-        balance = new Balance();
+        balance = new Balance(Installation.id(context));
         balance.setBankAccountName(account.getName());
         balance.setBankName(account.getBank());
     }

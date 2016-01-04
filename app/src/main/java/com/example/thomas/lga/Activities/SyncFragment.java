@@ -12,18 +12,23 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.thomas.lga.Database.SQLiteFinanceHandler;
+import com.example.thomas.lga.Finances.Balance;
+import com.example.thomas.lga.Finances.BankAccount;
 import com.example.thomas.lga.Finances.Expenses;
 import com.example.thomas.lga.Finances.FinanceUtilities;
+import com.example.thomas.lga.Finances.StandingOrder;
 import com.example.thomas.lga.LGA;
 import com.example.thomas.lga.Network.Message;
 import com.example.thomas.lga.Network.MessageHandler;
 import com.example.thomas.lga.Network.MessageParser;
+import com.example.thomas.lga.Network.Messages.BalancesMessage;
+import com.example.thomas.lga.Network.Messages.BankAccountsMessage;
 import com.example.thomas.lga.Network.Messages.ExpensesMessage;
-import com.example.thomas.lga.Network.Messages.RequestSyncMessage;
+import com.example.thomas.lga.Network.Messages.RequestMessage;
+import com.example.thomas.lga.Network.Messages.StandingOrdersMessage;
 import com.example.thomas.lga.Network.Messages.SyncResultMessage;
 import com.example.thomas.lga.Network.SyncConnection;
 import com.example.thomas.lga.R;
-import com.example.thomas.lga.Views.Adapter.ExpensesAdapter;
 import com.example.thomas.lga.Views.ConflictedDialog;
 
 import org.androidannotations.annotations.AfterViews;
@@ -67,6 +72,8 @@ public class SyncFragment extends DialogFragment
     public TextView text_status;
 
     private boolean checking;
+    private ConflictedDialog conflictedDialog;
+    private SyncListener callback;
 
     public SyncFragment()
     {
@@ -77,9 +84,9 @@ public class SyncFragment extends DialogFragment
     @Override
     public void onAttach(Context context)
     {
-        Log.d(LogKey, "On Attach Context");
+        Log.i(LogKey, "On Attach Context");
         super.onAttach(context);
-        //callback = (Observer) context;
+        callback = (SyncListener) context;
     }
 
     @AfterViews
@@ -123,13 +130,17 @@ public class SyncFragment extends DialogFragment
                     boolean authorized = LGA.getSingleton().isAuthorized();
                     switch (msg.getId())
                     {
-                        case MessageParser.Request_Sync1:
-                            RequestSyncMessage requestSyncMessage = (RequestSyncMessage) msg;
+                        case MessageParser.Request_Expenses:
+                        case MessageParser.Request_StandingOrders:
+                        case MessageParser.Request_BankAccounts:
+                        case MessageParser.Request_Balances:
+
+                            RequestMessage requestSyncMessage = (RequestMessage) msg;
                             if (requestSyncMessage.isAuthorized())
                             {
                                 if (!LGA.getSingleton().isAuthorized())
                                 {
-                                    Log.d(LogKey, "Not Authorized!");
+                                    Log.i(LogKey, "Not Authorized!");
                                     Toast.makeText(getContext(), R.string.not_authorized_for_sync, Toast.LENGTH_SHORT).show();
                                     return;
                                 }
@@ -137,42 +148,121 @@ public class SyncFragment extends DialogFragment
                             {
                                 if (LGA.getSingleton().isAuthorized())
                                 {
-                                    Log.d(LogKey, "Authorized!");
+                                    Log.i(LogKey, "Authorized!");
                                     LGA.getSingleton().setAuthorized(false);
                                 }
                             }
-                            List<Expenses> expensesList = SQLiteFinanceHandler.getExpensesToSync(getActivity(), requestSyncMessage.getDate());
 
-                            SyncConnection.getInstance().sendMessage(new ExpensesMessage(expensesList));
-                            Log.d(LogKey, "Sent Expenses: ");
-                            for (Expenses expenses : expensesList)
+                            switch (requestSyncMessage.getId())
                             {
-                                Log.d(LogKey, expenses.toString());
+                                case MessageParser.Request_Expenses:
+                                    List<Expenses> expensesList = SQLiteFinanceHandler.getExpensesToSync(getActivity(), requestSyncMessage.getDate());
+
+                                    SyncConnection.getInstance().sendMessage(new ExpensesMessage(expensesList));
+                                    Log.i(LogKey, "Sent Expenses: ");
+                                    for (Expenses expenses : expensesList)
+                                    {
+                                        Log.i(LogKey, expenses.toString());
+                                    }
+                                    break;
+
+                                case MessageParser.Request_StandingOrders:
+                                    List<StandingOrder> standingOrders = SQLiteFinanceHandler.getStandingOrdersToSync(getActivity(), requestSyncMessage.getDate());
+
+                                    SyncConnection.getInstance().sendMessage(new StandingOrdersMessage(standingOrders));
+                                    Log.i(LogKey, "Sent StandingOrders: ");
+                                    for (StandingOrder standingOrder : standingOrders)
+                                    {
+                                        Log.i(LogKey, standingOrder.toString());
+                                    }
+                                    break;
+                                case MessageParser.Request_BankAccounts:
+                                    List<BankAccount> bankAccounts = SQLiteFinanceHandler.getBankAccountsToSync(getActivity(), requestSyncMessage.getDate());
+
+                                    SyncConnection.getInstance().sendMessage(new BankAccountsMessage(bankAccounts));
+                                    Log.i(LogKey, "Sent BankAccounts: ");
+                                    for (BankAccount bankAccount : bankAccounts)
+                                    {
+                                        Log.i(LogKey, bankAccount.toString());
+                                    }
+                                    break;
+
+                                case MessageParser.Request_Balances:
+                                    List<Balance> balances = SQLiteFinanceHandler.getBalancesToSync(getActivity(), requestSyncMessage.getDate());
+
+                                    SyncConnection.getInstance().sendMessage(new BalancesMessage(balances));
+                                    Log.i(LogKey, "Sent Balances: ");
+                                    for (Balance balance : balances)
+                                    {
+                                        Log.i(LogKey, balance.toString());
+                                    }
+                                    break;
                             }
+
                             break;
 
                         case MessageParser.Expenses:
                             ExpensesMessage expensesMessage = (ExpensesMessage) msg;
-                            ExpensesAdapter adapter = new ExpensesAdapter(getContext());
-
-                            Log.d(LogKey, "Received Expenses: ");
+                            Log.i(LogKey, "Received Expenses: ");
                             for (Expenses expenses : expensesMessage.getExpenses())
                             {
-                                Log.d(LogKey, expenses.toString());
+                                Log.i(LogKey, expenses.toString());
                             }
 
                             List<Expenses> conflicted = FinanceUtilities.syncExpenses(getContext(), expensesMessage.getExpenses(), lastSyncDate(authorized ? LastSyncReceiveKey : LastSyncReceiveDemoKey));
+
+                            SyncConnection.getInstance().sendMessage(new RequestMessage(lastSyncDate(LGA.getSingleton().isAuthorized() ? LastSyncReceiveKey : LastSyncReceiveDemoKey), LGA.getSingleton().isAuthorized(), MessageParser.Request_StandingOrders));
+                            handleConflictedExpenses(conflicted);
+                            break;
+
+                        case MessageParser.StandingOrders:
+                            StandingOrdersMessage standingOrdersMessage = (StandingOrdersMessage) msg;
+
+                            Log.i(LogKey, "Received StandingOrders: ");
+                            for (StandingOrder standingOrder : standingOrdersMessage.getStandingOrders())
+                            {
+                                Log.i(LogKey, standingOrder.toString());
+                            }
+
+                            List<StandingOrder> conflictedStandingOrders = FinanceUtilities.syncStandingOrders(getContext(), standingOrdersMessage.getStandingOrders(), lastSyncDate(authorized ? LastSyncReceiveKey : LastSyncReceiveDemoKey));
+
+                            SyncConnection.getInstance().sendMessage(new RequestMessage(lastSyncDate(LGA.getSingleton().isAuthorized() ? LastSyncReceiveKey : LastSyncReceiveDemoKey), LGA.getSingleton().isAuthorized(), MessageParser.Request_BankAccounts));
+                            handleConflictedStandingOrders(conflictedStandingOrders);
+                            break;
+
+                        case MessageParser.BankAccounts:
+                            BankAccountsMessage bankAccountsMessage = (BankAccountsMessage) msg;
+                            Log.i(LogKey, "Received Expenses: ");
+                            for (BankAccount bankAccount : bankAccountsMessage.getBankAccounts())
+                            {
+                                Log.i(LogKey, bankAccount.toString());
+                            }
+
+                            List<BankAccount> conflictedBankAccounts = FinanceUtilities.syncBankAccounts(getContext(), bankAccountsMessage.getBankAccounts(), lastSyncDate(authorized ? LastSyncReceiveKey : LastSyncReceiveDemoKey));
+                            SyncConnection.getInstance().sendMessage(new RequestMessage(lastSyncDate(LGA.getSingleton().isAuthorized() ? LastSyncReceiveKey : LastSyncReceiveDemoKey), LGA.getSingleton().isAuthorized(), MessageParser.Request_Balances));
+                            handleConflictedBankAccounts(conflictedBankAccounts);
+                            break;
+
+                        case MessageParser.Balances:
+                            BalancesMessage balancesMessage = (BalancesMessage) msg;
+                            Log.i(LogKey, "Received Balances: ");
+                            for (Balance ba : balancesMessage.getBalances())
+                            {
+                                Log.i(LogKey, ba.toString());
+                            }
+
+                            List<Balance> conflictedBalances = FinanceUtilities.syncBalances(getContext(), balancesMessage.getBalances(), lastSyncDate(authorized ? LastSyncReceiveKey : LastSyncReceiveDemoKey));
                             setSyncDate(authorized ? LastSyncReceiveKey : LastSyncReceiveDemoKey, DateTime.now());
                             SyncConnection.getInstance().sendMessage(new SyncResultMessage(true));
-                            adapter.setExpenses(conflicted);
-                            adapter.updateExpenses();
-                            listView.setAdapter(adapter);
-                            adapter.notifyDataSetChanged();
-                            handleConflicted(conflicted);
+                            handleConflictedBalances(conflictedBalances);
+                            conflictedDialog.show();
+                            setSyncDate(authorized ? LastSyncReceiveKey : LastSyncReceiveDemoKey, DateTime.now());
+                            updateAdapters();
                             break;
 
                         case MessageParser.Sync_Result:
                             SyncResultMessage resultMessage = (SyncResultMessage) msg;
+
                             if (resultMessage.isResult())
                             {
                                 setSyncDate(authorized ? LastSyncSendKey : LastSyncSendDemoKey, DateTime.now());
@@ -184,11 +274,59 @@ public class SyncFragment extends DialogFragment
         }
     }
 
-    private void handleConflicted(List<Expenses> conflicted)
+    private void updateAdapters()
     {
-        if (conflicted.size() > 0)
+        if (callback != null)
         {
-            new ConflictedDialog(getContext(), conflicted).show();
+            callback.updateAll();
+        }
+    }
+
+    private void handleConflictedExpenses(List<Expenses> conflicted)
+    {
+        if (conflictedDialog == null)
+        {
+            conflictedDialog = new ConflictedDialog(getContext());
+            conflictedDialog.setExpenses(conflicted);
+        } else
+        {
+            conflictedDialog.setExpenses(conflicted);
+        }
+    }
+
+    private void handleConflictedStandingOrders(List<StandingOrder> conflicted)
+    {
+        if (conflictedDialog == null)
+        {
+            conflictedDialog = new ConflictedDialog(getContext());
+            conflictedDialog.setStandingOrders(conflicted);
+        } else
+        {
+            conflictedDialog.setStandingOrders(conflicted);
+        }
+    }
+
+    private void handleConflictedBankAccounts(List<BankAccount> conflicted)
+    {
+        if (conflictedDialog == null)
+        {
+            conflictedDialog = new ConflictedDialog(getContext());
+            conflictedDialog.setBankAccounts(conflicted);
+        } else
+        {
+            conflictedDialog.setBankAccounts(conflicted);
+        }
+    }
+
+    private void handleConflictedBalances(List<Balance> conflicted)
+    {
+        if (conflictedDialog == null)
+        {
+            conflictedDialog = new ConflictedDialog(getContext());
+            conflictedDialog.setBalances(conflicted);
+        } else
+        {
+            conflictedDialog.setBalances(conflicted);
         }
     }
 
@@ -211,7 +349,7 @@ public class SyncFragment extends DialogFragment
     @Click(R.id.button_sync)
     public void synchronize()
     {
-        SyncConnection.getInstance().sendMessage(new RequestSyncMessage(lastSyncDate(LGA.getSingleton().isAuthorized() ? LastSyncReceiveKey : LastSyncReceiveDemoKey), LGA.getSingleton().isAuthorized()));
+        SyncConnection.getInstance().sendMessage(new RequestMessage(lastSyncDate(LGA.getSingleton().isAuthorized() ? LastSyncReceiveKey : LastSyncReceiveDemoKey), LGA.getSingleton().isAuthorized(), MessageParser.Request_Expenses));
     }
 
     @Override
@@ -294,7 +432,7 @@ public class SyncFragment extends DialogFragment
                     }
                 } catch (Exception e)
                 {
-                    Log.d(LogKey, "Could not connect: " + e.getMessage());
+                    Log.i(LogKey, "Could not connect: " + e.getMessage());
                     text = e.getMessage();
                 } finally
                 {

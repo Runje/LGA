@@ -450,7 +450,7 @@ public class FinanceUtilities
             @Override
             public void run()
             {
-                Log.d(LogKey, "Synchronizing");
+                Log.i(LogKey, "Synchronizing");
                 List<StandingOrder> orders = SQLiteFinanceHandler.getStandingOrders(context);
                 for (StandingOrder order : orders)
                 {
@@ -468,13 +468,13 @@ public class FinanceUtilities
 
         for (DateTime date : dates)
         {
-            Log.d(LogKey, date.toString("dd.MM.yyyy"));
+            Log.i(LogKey, date.toString("dd.MM.yyyy"));
             if (!FinanceUtilities.standingOrderExecuted(context, order, date))
             {
                 FinanceUtilities.executeStandingOrder(context, order, date);
             } else
             {
-                Log.d(LogKey, "exists already");
+                Log.i(LogKey, "exists already");
             }
         }
     }
@@ -489,7 +489,7 @@ public class FinanceUtilities
     {
         Expenses expenses = Utilities.createExpensesFromStandingOrder(order, date, Installation.id(context));
         SQLiteFinanceHandler.addExpenses(context, expenses);
-        Log.d(LogKey, "added: " + expenses);
+        Log.i(LogKey, "added: " + expenses);
     }
 
     public static OverviewItem getFixedCostsOverview(List<StandingOrder> standingOrders, List<String> names)
@@ -604,9 +604,9 @@ public class FinanceUtilities
         return time;
     }
 
-    public static Balance createBalanceFromAccount(BankAccount account)
+    public static Balance createBalanceFromAccount(BankAccount account, String myId)
     {
-        return new Balance(account.getBalance(), account.getDate(), account.getBank(), account.getName());
+        return new Balance(account.getBalance(), account.getDate(), account.getBank(), account.getName(), myId);
     }
 
     public static OverviewItem getOwningsLastMonthOverview(Context context, List<String> names)
@@ -694,7 +694,7 @@ public class FinanceUtilities
     public static List<Expenses> syncExpenses(Context context, List<Expenses> expenses, DateTime lastSync)
     {
         String myId = Installation.id(context);
-        Log.d(LogKey, "last Sync: " + lastSync.toString() + ", id: " + myId);
+        Log.i(LogKey, "last Sync: " + lastSync.toString() + ", id: " + myId);
         List<Expenses> conflicts = new ArrayList<>();
         for (Expenses ex : expenses)
         {
@@ -714,20 +714,87 @@ public class FinanceUtilities
         return conflicts;
     }
 
+    public static List<Balance> syncBalances(Context context, List<Balance> balances, DateTime lastSync)
+    {
+        String myId = Installation.id(context);
+        Log.i(LogKey, "last Sync: " + lastSync.toString() + ", id: " + myId);
+        List<Balance> conflicts = new ArrayList<>();
+        for (Balance ba : balances)
+        {
+            if (ba.getLastChangeFrom().equals(myId))
+            {
+                // don't synchronize my modifications
+                continue;
+            }
+            boolean conflict = syncBalance(context, ba, lastSync);
+            if (conflict)
+            {
+                conflicts.add(ba);
+            }
+        }
+
+        return conflicts;
+    }
+
+    public static List<BankAccount> syncBankAccounts(Context context, List<BankAccount> bankAccounts, DateTime lastSync)
+    {
+        String myId = Installation.id(context);
+        Log.i(LogKey, "last Sync: " + lastSync.toString() + ", id: " + myId);
+        List<BankAccount> conflicts = new ArrayList<>();
+        for (BankAccount ba : bankAccounts)
+        {
+            if (ba.getLastChangeFrom().equals(myId))
+            {
+                // don't synchronize my modifications
+                continue;
+            }
+            boolean conflict = syncBankAccount(context, ba, lastSync);
+            if (conflict)
+            {
+                conflicts.add(ba);
+            }
+        }
+
+        return conflicts;
+    }
+
+    public static List<StandingOrder> syncStandingOrders(Context context, List<StandingOrder> standingOrders, DateTime lastSync)
+    {
+        String myId = Installation.id(context);
+        Log.i(LogKey, "last Sync: " + lastSync.toString() + ", id: " + myId);
+        List<StandingOrder> conflicts = new ArrayList<>();
+        for (StandingOrder standingOrder : standingOrders)
+        {
+            if (standingOrder.getLastChangeFrom().equals(myId))
+            {
+                // don't synchronize my modifications
+                continue;
+            }
+            boolean conflict = syncStandingOrder(context, standingOrder, lastSync);
+            if (conflict)
+            {
+                conflicts.add(standingOrder);
+            }
+        }
+
+        return conflicts;
+    }
+
+
     private static boolean syncExpenses(Context context, Expenses expenses, DateTime lastSync)
     {
-        Log.d(LogKey, "Syncing " + expenses.toString());
+        Log.i(LogKey, "Syncing " + expenses.toString());
         if (expenses.getInsertDate().isAfter(lastSync))
         {
             // add new entry
-            Log.d(LogKey, "Adding new Entry");
+            Log.i(LogKey, "Adding new Entry");
             // check if entry exists
             Expenses ex = SQLiteFinanceHandler.getExpensesById(context, expenses.getId());
 
 
             if (ex != null)
             {
-                Log.d(LogKey, "Id found");
+                Log.i(LogKey, "Id found");
                 // overwrite old entry
                 SQLiteFinanceHandler.overwriteExpenses(context, expenses);
 
@@ -735,12 +802,11 @@ public class FinanceUtilities
                 ex.setId(0);
                 // readd old entry
                 SQLiteFinanceHandler.addExpenses(context, ex);
-                Log.d(LogKey, "Overwrote old with new and readded old");
+                Log.i(LogKey, "Overwrote old with new and readded old");
             } else
             {
-                List<Expenses> expenses1 = SQLiteFinanceHandler.getExpenses(context);
                 SQLiteFinanceHandler.addExpenses(context, expenses);
-                Log.d(LogKey, "Added new");
+                Log.i(LogKey, "Added new");
             }
 
             // add category
@@ -758,18 +824,180 @@ public class FinanceUtilities
             if (ex.getLastModifiedDate().isAfter(lastSync))
             {
                 // conflict
-                Log.d(LogKey, "Conflict with " + ex.toString());
+                Log.i(LogKey, "Conflict with " + ex.toString());
                 return true;
             }
 
             SQLiteFinanceHandler.overwriteExpenses(context, expenses);
-            Log.d(LogKey, "Overwrote old with new");
+            Log.i(LogKey, "Overwrote old with new");
 
         }
 
         return false;
-
     }
+
+    private static boolean syncStandingOrder(Context context, StandingOrder standingOrder, DateTime lastSync)
+    {
+        Log.i(LogKey, "Syncing " + standingOrder.toString());
+        Log.i(LogKey, "Insert Date " + standingOrder.getInsertDate().toString());
+        if (standingOrder.getInsertDate().isAfter(lastSync))
+        {
+            // add new entry
+            Log.i(LogKey, "Adding new Entry");
+            // check if entry exists
+            StandingOrder standingOrderById = SQLiteFinanceHandler.getStandingOrderById(context, standingOrder.getId());
+
+            if (standingOrderById != null)
+            {
+                Log.i(LogKey, "Id found");
+                // overwrite old entry
+                SQLiteFinanceHandler.overwriteStandingOrder(context, standingOrder);
+
+                // set id to 0 to create a new id
+                standingOrderById.setId(0);
+                // readd old entry
+                SQLiteFinanceHandler.addStandingOrder(context, standingOrderById);
+                Log.i(LogKey, "Overwrote old with new and readded old");
+            } else
+            {
+                SQLiteFinanceHandler.addStandingOrder(context, standingOrder);
+                Log.i(LogKey, "Added new");
+            }
+
+            // add category
+            FinanceUtilities.addNewCategory(context, standingOrder.getCategory());
+        } else
+        {
+            // update old entry
+            StandingOrder st = SQLiteFinanceHandler.getStandingOrderById(context, standingOrder.getId());
+            if (st == null)
+            {
+                throw new RuntimeException("Entry doesn't exist: " + standingOrder.toString());
+            }
+
+            // check for conflict
+            if (st.getLastModifiedDate().isAfter(lastSync))
+            {
+                // conflict
+                Log.i(LogKey, "Conflict with " + st.toString());
+                return true;
+            }
+
+            SQLiteFinanceHandler.overwriteStandingOrder(context, standingOrder);
+            Log.i(LogKey, "Overwrote old with new");
+        }
+
+        return false;
+    }
+
+
+    private static boolean syncBankAccount(Context context, BankAccount bankAccount, DateTime lastSync)
+    {
+        Log.i(LogKey, "Syncing " + bankAccount.toString());
+        if (bankAccount.getInsertDate().isAfter(lastSync))
+        {
+            // add new entry
+            Log.i(LogKey, "Adding new Entry");
+            // check if entry exists
+            BankAccount ba = SQLiteFinanceHandler.getBankAccountById(context, bankAccount.getId());
+
+
+            if (ba != null)
+            {
+                Log.i(LogKey, "Id found");
+                // overwrite old entry
+                SQLiteFinanceHandler.overwriteBankAccount(context, bankAccount);
+
+                // set id to 0 to create a new id
+                ba.setId(0);
+                // readd old entry
+                SQLiteFinanceHandler.addBankAccount(context, ba);
+                Log.i(LogKey, "Overwrote old with new and readded old");
+            } else
+            {
+                SQLiteFinanceHandler.addBankAccount(context, bankAccount);
+                Log.i(LogKey, "Added new");
+            }
+
+        } else
+        {
+            // update old entry
+            BankAccount bankAccount1 = SQLiteFinanceHandler.getBankAccountById(context, bankAccount.getId());
+            if (bankAccount1 == null)
+            {
+                throw new RuntimeException("Entry doesn't exist: " + bankAccount.toString());
+            }
+
+            // check for conflict
+            if (bankAccount1.getLastModifiedDate().isAfter(lastSync))
+            {
+                // conflict
+                Log.i(LogKey, "Conflict with " + bankAccount1.toString());
+                return true;
+            }
+
+            SQLiteFinanceHandler.overwriteBankAccount(context, bankAccount);
+            Log.i(LogKey, "Overwrote old with new");
+
+        }
+
+        return false;
+    }
+
+
+    private static boolean syncBalance(Context context, Balance balance, DateTime lastSync)
+    {
+        Log.i(LogKey, "Syncing " + balance.toString());
+        if (balance.getInsertDate().isAfter(lastSync))
+        {
+            // add new entry
+            Log.i(LogKey, "Adding new Entry");
+            // check if entry exists
+            Balance balanceById = SQLiteFinanceHandler.getBalanceById(context, balance.getId());
+
+
+            if (balanceById != null)
+            {
+                Log.i(LogKey, "Id found");
+                // overwrite old entry
+                SQLiteFinanceHandler.overwriteBalance(context, balance);
+
+                // set id to 0 to create a new id
+                balanceById.setId(0);
+                // readd old entry
+                SQLiteFinanceHandler.addBalance(context, balanceById);
+                Log.i(LogKey, "Overwrote old with new and readded old");
+            } else
+            {
+                SQLiteFinanceHandler.addBalance(context, balance);
+                Log.i(LogKey, "Added new");
+            }
+
+        } else
+        {
+            // update old entry
+            Balance ba = SQLiteFinanceHandler.getBalanceById(context, balance.getId());
+            if (ba == null)
+            {
+                throw new RuntimeException("Entry doesn't exist: " + balance.toString());
+            }
+
+            // check for conflict
+            if (ba.getLastModifiedDate().isAfter(lastSync))
+            {
+                // conflict
+                Log.i(LogKey, "Conflict with " + ba.toString());
+                return true;
+            }
+
+            SQLiteFinanceHandler.overwriteBalance(context, balance);
+            Log.i(LogKey, "Overwrote old with new");
+
+        }
+
+        return false;
+    }
+
 
 
     private interface TimeFrameChecker

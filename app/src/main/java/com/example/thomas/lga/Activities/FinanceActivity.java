@@ -34,17 +34,15 @@ import org.joda.time.DateTime;
 
 import java.io.File;
 import java.util.List;
-import java.util.Observable;
-import java.util.Observer;
 
 /**
  * Created by Thomas on 06.09.2015.
  */
-public class FinanceActivity extends AppCompatActivity implements Observer
+public class FinanceActivity extends AppCompatActivity implements ExpensesFragment.ExpensesListener, StandingOrderFragment.StandingOrderListener, BankAccountFragment.BankAccountListener, SyncListener
 {
     public static final String DATABASE_NAME = "DB_NAME";
     private String LogKey = "FinanceActivity";
-    private OverviewAdapter adapter;
+    private OverviewAdapter overviewAdapter;
     private FinanceFragmentPagerAdapter pageAdapter;
     private ViewPager pager;
     private int page;
@@ -75,7 +73,7 @@ public class FinanceActivity extends AppCompatActivity implements Observer
             public void onUseDemoData()
             {
                 dialogIsVisible = false;
-                updateExpenses();
+                updateAll();
                 all.setVisibility(View.VISIBLE);
                 init();
             }
@@ -84,7 +82,7 @@ public class FinanceActivity extends AppCompatActivity implements Observer
             public void onCancel()
             {
                 dialogIsVisible = false;
-                updateExpenses();
+                updateAll();
                 all.setVisibility(View.VISIBLE);
                 init();
             }
@@ -97,10 +95,11 @@ public class FinanceActivity extends AppCompatActivity implements Observer
         }
     }
 
-    private void updateAll()
+    public void updateAll()
     {
         updateExpenses();
-        pageAdapter.getBankAccountFragment().update();
+        pageAdapter.getStandingOrderFragment().updateStandingOrders();
+        pageAdapter.getBankAccountFragment().updateBankAccounts();
     }
 
     @Override
@@ -127,8 +126,8 @@ public class FinanceActivity extends AppCompatActivity implements Observer
         p1.setText(names.get(0));
         p2.setText(names.get(1));
 
-        adapter = new OverviewAdapter(this);
-        listView.setAdapter(adapter);
+        overviewAdapter = new OverviewAdapter(this);
+        listView.setAdapter(overviewAdapter);
         FinanceUtilities.synchronizeWithStandingOrders(this, new Runnable()
         {
             @Override
@@ -139,7 +138,7 @@ public class FinanceActivity extends AppCompatActivity implements Observer
                     @Override
                     public void run()
                     {
-                        updateAll();
+                        updateExpenses();
                     }
                 });
             }
@@ -176,16 +175,16 @@ public class FinanceActivity extends AppCompatActivity implements Observer
                 switch (position)
                 {
                     case 0:
-                        adapter.setMode(OverviewAdapter.Mode.Expenses);
+                        overviewAdapter.setMode(OverviewAdapter.Mode.Expenses);
                         break;
                     case 1:
-                        adapter.setMode(OverviewAdapter.Mode.StandingOrder);
+                        overviewAdapter.setMode(OverviewAdapter.Mode.StandingOrder);
                         break;
                     case 2:
-                        adapter.setMode(OverviewAdapter.Mode.BankAccount);
+                        overviewAdapter.setMode(OverviewAdapter.Mode.BankAccount);
                         break;
                     case 3:
-                        adapter.setMode(OverviewAdapter.Mode.BankAccount);
+                        overviewAdapter.setMode(OverviewAdapter.Mode.BankAccount);
                         break;
                 }
 
@@ -301,7 +300,7 @@ public class FinanceActivity extends AppCompatActivity implements Observer
                     String myId = Installation.id(FinanceActivity.this);
                     SQLiteFinanceHandler.addBalance(FinanceActivity.this, new Balance(bankAccount.getBalance(), bankAccount.getDate(), bankAccount.getBank(), bankAccount.getName(), myId));
 
-                    pageAdapter.getBankAccountFragment().update();
+                    pageAdapter.getBankAccountFragment().updateFromBankAccount();
                 }
             });
 
@@ -318,22 +317,7 @@ public class FinanceActivity extends AppCompatActivity implements Observer
             {
                 ExpensesFragment fragment = pageAdapter.getExpensesFragment();
                 fragment.updateExpenses();
-                StandingOrderFragment standingOrderFragment = pageAdapter.getStandingOrderFragment();
-                standingOrderFragment.updateExpenses();
-                adapter.update();
-            }
-        }).start();
-    }
-
-    @Override
-    public void update(Observable observable, Object data)
-    {
-        new Thread(new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                adapter.update();
+                overviewAdapter.update();
             }
         }).start();
     }
@@ -357,7 +341,8 @@ public class FinanceActivity extends AppCompatActivity implements Observer
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_backup)
         {
-            File backup = Utilities.exportDB(this, SQLiteFinanceHandler.getActiveDatabaseName(), LGA.getSingleton().isAuthorized() ? "finances_db_backup" : "finances_db_demo_backup");
+            String date = DateTime.now().toString("yyyy.MM.dd");
+            File backup = Utilities.exportDB(this, SQLiteFinanceHandler.getActiveDatabaseName(), LGA.getSingleton().isAuthorized() ? ("finances_db_backup_" + date) : ("finances_db_demo_backup_" + date));
             Utilities.sendFilePerMail(this, backup, "thomashorn87@gmail.com");
             return true;
         }
@@ -373,6 +358,11 @@ public class FinanceActivity extends AppCompatActivity implements Observer
         {
             SyncFragment_ syncFragment = new SyncFragment_();
             syncFragment.show(getSupportFragmentManager(), "sync_fragment");
+        }
+
+        if (id == R.id.action_clean)
+        {
+            SQLiteFinanceHandler.cleanDatabase(this);
         }
 
         return super.onOptionsItemSelected(item);
@@ -394,11 +384,30 @@ public class FinanceActivity extends AppCompatActivity implements Observer
             if (filePath != null)
             {
                 Utilities.importDB(this, new File(filePath), SQLiteFinanceHandler.getActiveDatabaseName());
-                updateExpenses();
+                updateAll();
             }
         }
 
         super.onActivityResult(requestCode, resultCode, data);
     }
 
+    @Override
+    public void updateFromExpenses()
+    {
+        overviewAdapter.update();
+        pageAdapter.getBankAccountFragment().updateBankAccounts();
+    }
+
+    @Override
+    public void updateFromBankAccounts()
+    {
+        overviewAdapter.update();
+    }
+
+    @Override
+    public void updateFromStandingOrders()
+    {
+        overviewAdapter.update();
+
+    }
 }

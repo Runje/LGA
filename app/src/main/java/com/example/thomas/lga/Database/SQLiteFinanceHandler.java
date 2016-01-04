@@ -316,6 +316,110 @@ public class SQLiteFinanceHandler extends SQLiteOpenHelper
         return categorys;
     }
 
+    public static void cleanDatabase(Context context)
+    {
+        SQLiteFinanceHandler handler = new SQLiteFinanceHandler(context);
+        SQLiteDatabase db = handler.getWritableDatabase();
+
+        // delete deleted for real!
+        List<Balance> deletedBalances = BalanceTable.getDeleted(db);
+        BalanceTable.deleteForReal(deletedBalances, db);
+        List<BankAccount> deletedBankAccounts = BankAccountTable.getDeleted(db);
+        BankAccountTable.deleteForReal(deletedBankAccounts, db);
+        List<Expenses> deletedExpenses = ExpensesTable.getDeleted(db);
+        ExpensesTable.deleteForReal(deletedExpenses, db);
+        List<StandingOrder> deletedStandingOrders = StandingOrderTable.getDeleted(db);
+        StandingOrderTable.deleteForReal(deletedStandingOrders, db);
+
+        // trim all entrys(name, category)
+        List<Balance> balances = BalanceTable.getAll(db);
+        BalanceTable.trim(balances, db);
+        List<BankAccount> bankAccounts = BankAccountTable.getAll(db);
+        BankAccountTable.trim(bankAccounts, db);
+        List<Expenses> expenses = ExpensesTable.getAll(db);
+        ExpensesTable.trim(expenses, db);
+        List<StandingOrder> standingOrders = StandingOrderTable.getAll(db);
+        StandingOrderTable.trim(standingOrders, db);
+    }
+
+    public static List<StandingOrder> getStandingOrdersToSync(Context context, DateTime date)
+    {
+        SQLiteFinanceHandler handler = new SQLiteFinanceHandler(context);
+        SQLiteDatabase db = handler.getReadableDatabase();
+        List<StandingOrder> standingOrders = StandingOrderTable.getChangedSince(db, date, context.getString(R.string.compensation));
+        db.close();
+        return standingOrders;
+    }
+
+    public static List<BankAccount> getBankAccountsToSync(Context context, DateTime date)
+    {
+        SQLiteFinanceHandler handler = new SQLiteFinanceHandler(context);
+        SQLiteDatabase db = handler.getReadableDatabase();
+        List<BankAccount> bankAccounts = BankAccountTable.getChangedSince(db, date);
+        db.close();
+        return bankAccounts;
+    }
+
+    public static List<Balance> getBalancesToSync(Context context, DateTime date)
+    {
+        SQLiteFinanceHandler handler = new SQLiteFinanceHandler(context);
+        SQLiteDatabase db = handler.getReadableDatabase();
+        List<Balance> balances = BalanceTable.getChangedSince(db, date);
+        db.close();
+        return balances;
+    }
+
+    public static StandingOrder getStandingOrderById(Context context, int id)
+    {
+        SQLiteFinanceHandler handler = new SQLiteFinanceHandler(context);
+        SQLiteDatabase db = handler.getReadableDatabase();
+        StandingOrder standingOrder = StandingOrderTable.getById(db, id);
+        db.close();
+        return standingOrder;
+    }
+
+    public static BankAccount getBankAccountById(Context context, int id)
+    {
+        SQLiteFinanceHandler handler = new SQLiteFinanceHandler(context);
+        SQLiteDatabase db = handler.getReadableDatabase();
+        BankAccount bankAccount = BankAccountTable.getById(db, id);
+        db.close();
+        return bankAccount;
+    }
+
+    public static Balance getBalanceById(Context context, int id)
+    {
+        SQLiteFinanceHandler handler = new SQLiteFinanceHandler(context);
+        SQLiteDatabase db = handler.getReadableDatabase();
+        Balance balance = BalanceTable.getById(db, id);
+        db.close();
+        return balance;
+    }
+
+    public static void overwriteStandingOrder(Context context, StandingOrder standingOrder)
+    {
+        SQLiteFinanceHandler handler = new SQLiteFinanceHandler(context);
+        SQLiteDatabase db = handler.getWritableDatabase();
+        StandingOrderTable.overwrite(standingOrder, db);
+        db.close();
+    }
+
+    public static void overwriteBankAccount(Context context, BankAccount bankAccount)
+    {
+        SQLiteFinanceHandler handler = new SQLiteFinanceHandler(context);
+        SQLiteDatabase db = handler.getWritableDatabase();
+        BankAccountTable.overwrite(bankAccount, db);
+        db.close();
+    }
+
+    public static void overwriteBalance(Context context, Balance balance)
+    {
+        SQLiteFinanceHandler handler = new SQLiteFinanceHandler(context);
+        SQLiteDatabase db = handler.getWritableDatabase();
+        BalanceTable.overwrite(balance, db);
+        db.close();
+    }
+
     @Override
     public void onCreate(SQLiteDatabase db)
     {

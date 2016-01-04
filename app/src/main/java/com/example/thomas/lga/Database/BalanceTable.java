@@ -165,6 +165,14 @@ public class BalanceTable
         int i = db.update(TABLE_NAME, values, KEY_ID + " = " + balance.getId(), null);
     }
 
+    public static void deleteForReal(List<Balance> balances, SQLiteDatabase db)
+    {
+        for (Balance balance : balances)
+        {
+            db.delete(TABLE_NAME, KEY_ID + " = ?", new String[]{Integer.toString(balance.getId())});
+        }
+    }
+
     public static Balance find(Balance balance, SQLiteDatabase db)
     {
         ArrayList<Balance> balances = new ArrayList<>();
@@ -225,7 +233,7 @@ public class BalanceTable
 
         String selectQuery = "SELECT * FROM " + TABLE_NAME + " WHERE " + KEY_DELETED + " = ?";
 
-        Cursor cursor = db.rawQuery(selectQuery, new String[]{"0"});
+        Cursor cursor = db.rawQuery(selectQuery, new String[]{"1"});
 
         if (cursor.moveToFirst())
         {
@@ -239,6 +247,28 @@ public class BalanceTable
         cursor.close();
 
         return balances;
+    }
+
+    public static void overwrite(Balance balance, SQLiteDatabase db)
+    {
+        ContentValues values = balanceToValues(balance);
+        int i = db.update(TABLE_NAME, values, KEY_ID + " = " + balance.getId(), null);
+    }
+
+    public static Balance getById(SQLiteDatabase db, int id)
+    {
+        String selectQuery = "SELECT * FROM " + TABLE_NAME + " WHERE " + KEY_ID + " = ?";
+
+        Cursor cursor = db.rawQuery(selectQuery, new String[]{Integer.toString(id)});
+
+        Balance result = null;
+        if (cursor.moveToFirst())
+        {
+            result = createBalanceFromCursor(cursor);
+        }
+
+        cursor.close();
+        return result;
     }
 
     public static List<Balance> getChangedSince(SQLiteDatabase db, DateTime dateTime)
@@ -261,5 +291,14 @@ public class BalanceTable
         cursor.close();
 
         return balances;
+    }
+
+    public static void trim(List<Balance> balances, SQLiteDatabase db)
+    {
+        for (Balance balance : balances)
+        {
+            ContentValues values = balanceToValues(balance);
+            int i = db.update(TABLE_NAME, values, KEY_ID + " = " + balance.getId(), null);
+        }
     }
 }

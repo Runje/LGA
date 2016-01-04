@@ -99,4 +99,5 @@
     <string name="conflict">Konflikt</string>
     <string name="which_conflicted">Welchen Eintrag möchtest du übernehmen?</string>
     <string name="not_authorized_for_sync">Synchronisierung fehlgeschlagen: Nicht authorisiert</string>
+    <string name="action_clean">Säubern</string>
 </resources>

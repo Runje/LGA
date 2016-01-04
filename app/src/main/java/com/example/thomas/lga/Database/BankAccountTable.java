@@ -194,13 +194,21 @@ public class BankAccountTable
         int i = db.update(TABLE_NAME, values, KEY_ID + " = " + bankAccount.getId(), null);
     }
 
+    public static void deleteForReal(List<BankAccount> bankAccounts, SQLiteDatabase db)
+    {
+        for (BankAccount bankAccount : bankAccounts)
+        {
+            db.delete(TABLE_NAME, KEY_ID + " = ?", new String[]{Integer.toString(bankAccount.getId())});
+        }
+    }
+
     public static List<BankAccount> getDeleted(SQLiteDatabase db)
     {
         ArrayList<BankAccount> accounts = new ArrayList<>();
 
         String selectQuery = "SELECT * FROM " + TABLE_NAME + " WHERE " + KEY_DELETED + " = ?";
 
-        Cursor cursor = db.rawQuery(selectQuery, new String[]{"0"});
+        Cursor cursor = db.rawQuery(selectQuery, new String[]{"1"});
 
         if (cursor.moveToFirst())
         {
@@ -214,6 +222,28 @@ public class BankAccountTable
         cursor.close();
 
         return accounts;
+    }
+
+    public static void overwrite(BankAccount bankAccount, SQLiteDatabase db)
+    {
+        ContentValues values = bankAccountToValues(bankAccount);
+        int i = db.update(TABLE_NAME, values, KEY_ID + " = " + bankAccount.getId(), null);
+    }
+
+    public static BankAccount getById(SQLiteDatabase db, int id)
+    {
+        String selectQuery = "SELECT * FROM " + TABLE_NAME + " WHERE " + KEY_ID + " = ?";
+
+        Cursor cursor = db.rawQuery(selectQuery, new String[]{Integer.toString(id)});
+
+        BankAccount result = null;
+        if (cursor.moveToFirst())
+        {
+            result = createBankAccountFromCursor(cursor);
+        }
+
+        cursor.close();
+        return result;
     }
 
     public static List<BankAccount> getChangedSince(SQLiteDatabase db, DateTime dateTime)
@@ -238,4 +268,12 @@ public class BankAccountTable
         return bankAccounts;
     }
 
+    public static void trim(List<BankAccount> bankAccounts, SQLiteDatabase db)
+    {
+        for (BankAccount bankAccount : bankAccounts)
+        {
+            ContentValues values = bankAccountToValues(bankAccount);
+            int i = db.update(TABLE_NAME, values, KEY_ID + " = " + bankAccount.getId(), null);
+        }
+    }
 }

@@ -5,7 +5,6 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
 
-import com.example.thomas.lga.Activities.BalanceFragment;
 import com.example.thomas.lga.Activities.BankAccountFragment;
 import com.example.thomas.lga.Activities.ExpensesFragment;
 import com.example.thomas.lga.Activities.StandingOrderFragment;
@@ -79,8 +78,5 @@ public class FinanceFragmentPagerAdapter extends FragmentStatePagerAdapter
         return (BankAccountFragment) fragments.get(2);
     }
 
-    public BalanceFragment getBalanceFragment()
-    {
-        return (BalanceFragment) fragments.get(3);
-    }
+
 }

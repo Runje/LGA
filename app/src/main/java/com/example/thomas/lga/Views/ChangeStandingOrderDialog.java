@@ -94,7 +94,7 @@ public class ChangeStandingOrderDialog
             @Override
             public void onClick(DialogInterface dialog, int which)
             {
-                standingOrder.setLastDate(null);
+                standingOrder.setLastDate(StandingOrder.Unlimited);
                 showOverview();
             }
         });

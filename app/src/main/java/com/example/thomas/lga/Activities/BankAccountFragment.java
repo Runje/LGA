@@ -21,8 +21,6 @@ import com.example.thomas.lga.R;
 import com.example.thomas.lga.Views.Adapter.BankAccountAdapter;
 import com.example.thomas.lga.Views.AddBankAccountDialog;
 
-import java.util.Observer;
-
 /**
  * A simple {@link Fragment} subclass.
  * create an instance of this fragment.
@@ -32,7 +30,7 @@ public class BankAccountFragment extends Fragment
 
     private BankAccountAdapter adapter;
     private String LogKey = "ExpensesFragment";
-    private Observer callback;
+    private BankAccountListener callback;
 
     public BankAccountFragment()
     {
@@ -44,7 +42,7 @@ public class BankAccountFragment extends Fragment
     {
         Log.d(LogKey, "On Attach Activity");
         super.onAttach(context);
-        callback = (Observer) context;
+        callback = (BankAccountListener) context;
     }
 
     @Override
@@ -52,7 +50,7 @@ public class BankAccountFragment extends Fragment
     {
         Log.d(LogKey, "On Attach Context");
         super.onAttach(context);
-        callback = (Observer) context;
+        callback = (BankAccountListener) context;
     }
 
     @Override
@@ -101,19 +99,20 @@ public class BankAccountFragment extends Fragment
                     {
                         String myId = Installation.id(getContext());
                         SQLiteFinanceHandler.updateBankAccount(getActivity(), bankAccount, myId);
-                        Balance balance = FinanceUtilities.createBalanceFromAccount(bankAccount);
+                        Balance balance = FinanceUtilities.createBalanceFromAccount(bankAccount, myId);
                         Balance dbBalance = SQLiteFinanceHandler.findBalance(getContext(), balance);
                         if (dbBalance != null)
                         {
                             // update entry
+                            dbBalance.setBalance(dbBalance.getBalance());
                             SQLiteFinanceHandler.updateBalance(getContext(), dbBalance, myId);
-                        }
+                        } else
                         {
                             // add new entry
                             SQLiteFinanceHandler.addBalance(getContext(), balance);
                         }
 
-                        update();
+                        updateFromBankAccount();
                     }
                 });
 
@@ -124,18 +123,25 @@ public class BankAccountFragment extends Fragment
     }
 
 
-    public void update()
+    public void updateBankAccounts()
     {
         if (adapter != null)
         {
             adapter.updateAccounts();
         }
+    }
 
+    public void updateFromBankAccount()
+    {
+        updateBankAccounts();
         if (callback != null)
         {
-            callback.update(null, null);
+            callback.updateFromBankAccounts();
         }
     }
 
-
+    public interface BankAccountListener
+    {
+        void updateFromBankAccounts();
+    }
 }

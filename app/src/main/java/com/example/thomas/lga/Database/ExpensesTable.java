@@ -92,9 +92,9 @@ public class ExpensesTable
     {
         ArrayList<Expenses> points = new ArrayList<>();
 
-        String selectQuery = "SELECT * FROM " + TABLE_NAME + " WHERE " + KEY_DELETED + " = 0";
+        String selectQuery = "SELECT * FROM " + TABLE_NAME + " WHERE " + KEY_DELETED + " = ?";
 
-        Cursor cursor = db.rawQuery(selectQuery, null);
+        Cursor cursor = db.rawQuery(selectQuery, new String[]{"0"});
 
         if (cursor.moveToFirst())
         {
@@ -204,6 +204,14 @@ public class ExpensesTable
         ex.setDeleted(true);
         ContentValues values = expensesToValues(ex);
         int i = db.update(TABLE_NAME, values, KEY_ID + " = " + ex.getId(), null);
+    }
+
+    public static void deleteForReal(List<Expenses> expensesList, SQLiteDatabase db)
+    {
+        for (Expenses expenses : expensesList)
+        {
+            db.delete(TABLE_NAME, KEY_ID + " = ?", new String[]{Integer.toString(expenses.getId())});
+        }
     }
 
     public static boolean exists(SQLiteDatabase db, Expenses expenses)
@@ -334,5 +342,14 @@ public class ExpensesTable
         cursor.close();
 
         return categorys;
+    }
+
+    public static void trim(List<Expenses> expensesList, SQLiteDatabase db)
+    {
+        for (Expenses expenses : expensesList)
+        {
+            ContentValues values = expensesToValues(expenses);
+            int i = db.update(TABLE_NAME, values, KEY_ID + " = " + expenses.getId(), null);
+        }
     }
 }

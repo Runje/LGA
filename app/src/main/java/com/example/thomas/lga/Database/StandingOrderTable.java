@@ -62,8 +62,6 @@ public class StandingOrderTable
 
     public static void add(StandingOrder standingOrder, SQLiteDatabase db)
     {
-        standingOrder.setInsertDate(DateTime.now());
-        standingOrder.setLastModifiedDate(DateTime.now());
         ContentValues values = standingOrderToValues(standingOrder);
         // Inserting Row
         db.insert(TABLE_NAME, null, values);
@@ -93,9 +91,9 @@ public class StandingOrderTable
     {
         ArrayList<StandingOrder> points = new ArrayList<>();
 
-        String selectQuery = "SELECT * FROM " + TABLE_NAME;
+        String selectQuery = "SELECT * FROM " + TABLE_NAME + " WHERE " + KEY_DELETED + " = ?";
 
-        Cursor cursor = db.rawQuery(selectQuery, null);
+        Cursor cursor = db.rawQuery(selectQuery, new String[]{"0"});
 
         if (cursor.moveToFirst())
         {
@@ -135,7 +133,7 @@ public class StandingOrderTable
 
     private static StandingOrder createStandingOrderFromCursor(Cursor cursor)
     {
-        return new StandingOrder(cursor.getInt(0), cursor.getString(7), cursor.getInt(6) / 100f, cursor.getString(1), String.valueOf(cursor.getString(4)), cursor.getString(5), new DateTime(cursor.getLong(2)), new DateTime(cursor.getLong(3)), Frequency.valueOf(cursor.getString(8)), cursor.getInt(9), new DateTime(cursor.getLong(8)), new DateTime(cursor.getLong(9)), cursor.getInt(10) != 0, cursor.getString(11), cursor.getString(12));
+        return new StandingOrder(cursor.getInt(0), cursor.getString(7), cursor.getInt(6) / 100f, cursor.getString(1), String.valueOf(cursor.getString(4)), cursor.getString(5), new DateTime(cursor.getLong(2)), new DateTime(cursor.getLong(3)), Frequency.valueOf(cursor.getString(8)), cursor.getInt(9), new DateTime(cursor.getLong(10)), new DateTime(cursor.getLong(11)), cursor.getInt(12) != 0, cursor.getString(13), cursor.getString(14));
     }
 
     private static StandingOrder createStandingOrderFromCursorV11(Cursor cursor, String id)
@@ -179,13 +177,21 @@ public class StandingOrderTable
         int i = db.update(TABLE_NAME, values, KEY_ID + " = " + standingOrder.getId(), null);
     }
 
+    public static void deleteForReal(List<StandingOrder> standingOrders, SQLiteDatabase db)
+    {
+        for (StandingOrder standingOrder : standingOrders)
+        {
+            db.delete(TABLE_NAME, KEY_ID + " = ?", new String[]{Integer.toString(standingOrder.getId())});
+        }
+    }
+
     public static List<StandingOrder> getDeleted(SQLiteDatabase db)
     {
         ArrayList<StandingOrder> standingOrders = new ArrayList<>();
 
         String selectQuery = "SELECT * FROM " + TABLE_NAME + " WHERE " + KEY_DELETED + " = ?";
 
-        Cursor cursor = db.rawQuery(selectQuery, new String[]{"0"});
+        Cursor cursor = db.rawQuery(selectQuery, new String[]{"1"});
 
         if (cursor.moveToFirst())
         {
@@ -201,13 +207,35 @@ public class StandingOrderTable
         return standingOrders;
     }
 
-    public static List<StandingOrder> getChangedSince(SQLiteDatabase db, DateTime dateTime)
+    public static void overwrite(StandingOrder standingOrder, SQLiteDatabase db)
+    {
+        ContentValues values = standingOrderToValues(standingOrder);
+        int i = db.update(TABLE_NAME, values, KEY_ID + " = " + standingOrder.getId(), null);
+    }
+
+    public static StandingOrder getById(SQLiteDatabase db, int id)
+    {
+        String selectQuery = "SELECT * FROM " + TABLE_NAME + " WHERE " + KEY_ID + " = ?";
+
+        Cursor cursor = db.rawQuery(selectQuery, new String[]{Integer.toString(id)});
+
+        StandingOrder result = null;
+        if (cursor.moveToFirst())
+        {
+            result = createStandingOrderFromCursor(cursor);
+        }
+
+        cursor.close();
+        return result;
+    }
+
+    public static List<StandingOrder> getChangedSince(SQLiteDatabase db, DateTime dateTime, String compensation)
     {
         ArrayList<StandingOrder> standingOrders = new ArrayList<>();
 
-        String selectQuery = "SELECT * FROM " + TABLE_NAME + " WHERE " + KEY_MODIFIED_DATE + " > ?";
+        String selectQuery = "SELECT * FROM " + TABLE_NAME + " WHERE " + KEY_MODIFIED_DATE + " > ? AND " + KEY_NAME + " != ?";
 
-        Cursor cursor = db.rawQuery(selectQuery, new String[]{Long.toString(dateTime.getMillis())});
+        Cursor cursor = db.rawQuery(selectQuery, new String[]{Long.toString(dateTime.getMillis()), compensation});
 
         if (cursor.moveToFirst())
         {
@@ -221,5 +249,36 @@ public class StandingOrderTable
         cursor.close();
 
         return standingOrders;
+    }
+
+    public static void trim(List<StandingOrder> standingOrders, SQLiteDatabase db)
+    {
+        for (StandingOrder standingOrder : standingOrders)
+        {
+            ContentValues values = standingOrderToValues(standingOrder);
+            int i = db.update(TABLE_NAME, values, KEY_ID + " = " + standingOrder.getId(), null);
+        }
+    }
+
+    public static List<StandingOrder> getAllWithDeleted(SQLiteDatabase db)
+    {
+        ArrayList<StandingOrder> points = new ArrayList<>();
+
+        String selectQuery = "SELECT * FROM " + TABLE_NAME;
+
+        Cursor cursor = db.rawQuery(selectQuery, null);
+
+        if (cursor.moveToFirst())
+        {
+            do
+            {
+                StandingOrder standingOrder = createStandingOrderFromCursor(cursor);
+                points.add(standingOrder);
+            } while (cursor.moveToNext());
+        }
+
+        cursor.close();
+
+        return points;
     }
 }

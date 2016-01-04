@@ -15,7 +15,6 @@ import android.widget.TextView;
 import com.example.thomas.lga.Database.SQLiteFinanceHandler;
 import com.example.thomas.lga.Finances.Balance;
 import com.example.thomas.lga.Finances.BankAccount;
-import com.example.thomas.lga.Installation;
 import com.example.thomas.lga.LGA;
 import com.example.thomas.lga.R;
 import com.example.thomas.lga.Views.BalancesDialog;
@@ -80,7 +79,7 @@ public class BankAccountAdapter extends BaseAdapter
 
         for (BankAccount bankAccount : accounts)
         {
-            SQLiteFinanceHandler.updateBankAccount(context, bankAccount, Installation.id(context));
+            SQLiteFinanceHandler.overwriteBankAccount(context, bankAccount);
         }
     }
 

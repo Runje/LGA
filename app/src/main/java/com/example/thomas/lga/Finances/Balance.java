@@ -32,19 +32,28 @@ public class Balance extends DatabaseItem
         this.bankAccountName = bankAccountName;
     }
 
-    public Balance(float balance, DateTime date, String bank, String name)
+    public Balance(String myId)
     {
-        this(0, balance, date, bank, name, DateTime.now(), DateTime.now(), false, null, null);
-    }
-
-    public Balance()
-    {
-        super(null, null);
+        super(myId, myId);
     }
 
     public Balance(float balance, DateTime date, String bank, String name, String myId)
     {
         this(0, balance, date, bank, name, DateTime.now(), DateTime.now(), false, myId, myId);
+    }
+
+    @Override
+    public String toString()
+    {
+        return "Balance{" +
+                "balance=" + balance +
+                ", date=" + date.toString("yy-MM-dd HH:mm") +
+                ", bankName='" + bankName + '\'' +
+                ", bankAccountName='" + bankAccountName + '\'' +
+                ", deleted='" + deleted + '\'' +
+                ", modifiedDate=" + lastModifiedDate.toString("yy-MM-dd HH:mm") +
+                ", insertDate=" + insertDate.toString("yy-MM-dd HH:mm") +
+                '}';
     }
 
     public int getId()

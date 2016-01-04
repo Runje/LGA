@@ -25,8 +25,6 @@ import com.example.thomas.lga.Views.Adapter.ExpensesDBAdapter;
 import com.example.thomas.lga.Views.AddExpensesDialog;
 import com.example.thomas.lga.Views.ChangeStandingOrderDialog;
 
-import java.util.Observer;
-
 /**
  * A simple {@link Fragment} subclass.
  * create an instance of this fragment.
@@ -36,7 +34,7 @@ public class ExpensesFragment extends Fragment implements ExpensesDBAdapter.Expe
 
     private ExpensesDBAdapter adapter;
     private String LogKey = "ExpensesFragment";
-    private Observer callback;
+    private ExpensesListener callback;
 
     public ExpensesFragment()
     {
@@ -48,7 +46,7 @@ public class ExpensesFragment extends Fragment implements ExpensesDBAdapter.Expe
     {
         Log.d(LogKey, "On Attach Activity");
         super.onAttach(context);
-        callback = (Observer) context;
+        callback = (ExpensesListener) context;
     }
 
     @Override
@@ -56,7 +54,7 @@ public class ExpensesFragment extends Fragment implements ExpensesDBAdapter.Expe
     {
         Log.d(LogKey, "On Attach Context");
         super.onAttach(context);
-        callback = (Observer) context;
+        callback = (ExpensesListener) context;
     }
 
     @Override
@@ -104,7 +102,7 @@ public class ExpensesFragment extends Fragment implements ExpensesDBAdapter.Expe
                     public void onConfirm(Expenses expenses)
                     {
                         SQLiteFinanceHandler.updateExpenses(getActivity(), expenses, Installation.id(getContext()));
-                        updateExpenses();
+                        updateFromExpenses();
                     }
 
                     @Override
@@ -131,7 +129,7 @@ public class ExpensesFragment extends Fragment implements ExpensesDBAdapter.Expe
                                 {
                                     SQLiteFinanceHandler.updateStandingOrder(getActivity(), standingOrder, Installation.id(getContext()));
                                     FinanceUtilities.synchronizeOrder(getContext(), standingOrder);
-                                    updateExpenses();
+                                    updateFromExpenses();
                                 }
                             });
                             changeStandingOrderDialog.show();
@@ -166,17 +164,25 @@ public class ExpensesFragment extends Fragment implements ExpensesDBAdapter.Expe
         {
             adapter.updateExpenses();
         }
+    }
 
+    public void updateFromExpenses()
+    {
+        updateExpenses();
         if (callback != null)
         {
-            callback.update(null, null);
+            callback.updateFromExpenses();
         }
     }
 
     @Override
     public void onDelete()
     {
+        updateFromExpenses();
+    }
 
-        callback.update(null, null);
+    public interface ExpensesListener
+    {
+        void updateFromExpenses();
     }
 }

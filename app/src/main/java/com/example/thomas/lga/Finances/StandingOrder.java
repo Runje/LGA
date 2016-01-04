@@ -90,9 +90,9 @@ public class StandingOrder extends DatabaseItem
         this.number = number;
     }
 
-    public StandingOrder()
+    public StandingOrder(String myId)
     {
-        super(null, null);
+        super(myId, myId);
     }
 
     public int getNumber()
@@ -136,9 +136,12 @@ public class StandingOrder extends DatabaseItem
                 ", name='" + name + '\'' +
                 ", category=" + category +
                 ", user='" + user + '\'' +
-                ", firstDate=" + firstDate +
+                ", firstDate=" + firstDate.toString("yy-MM-dd HH:mm") +
                 ", frequency=" + frequency +
-                ", lastDate=" + lastDate +
+                ", lastDate=" + lastDate.toString("yy-MM-dd HH:mm") +
+                ", deleted=" + deleted +
+                ", modifiedDate=" + lastModifiedDate.toString("yy-MM-dd HH:mm") +
+                ", insertDate=" + insertDate.toString("yy-MM-dd HH:mm") +
                 '}';
     }
 

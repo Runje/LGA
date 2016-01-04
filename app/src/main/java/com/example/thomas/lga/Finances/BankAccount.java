@@ -73,6 +73,23 @@ public class BankAccount extends DatabaseItem
         this.balance = balance;
     }
 
+    @Override
+    public String toString()
+    {
+        return "BankAccount{" +
+                "owner='" + owner + '\'' +
+                ", name='" + name + '\'' +
+                ", bank='" + bank + '\'' +
+                ", interest=" + interest +
+                ", balance=" + balance +
+                ", date=" + date.toString("yy-MM-dd HH:mm") +
+                ", monthly_costs=" + monthly_costs +
+                ", deleted=" + deleted +
+                ", modifiedDate=" + lastModifiedDate.toString("yy-MM-dd HH:mm") +
+                ", iinsertDate=" + insertDate.toString("yy-MM-dd HH:mm") +
+                '}';
+    }
+
     public int getId()
     {
         return id;

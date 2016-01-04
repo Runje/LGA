@@ -24,8 +24,6 @@ import com.example.thomas.lga.Views.Adapter.ExpensesDBAdapter;
 import com.example.thomas.lga.Views.Adapter.StandingOrderAdapter;
 import com.example.thomas.lga.Views.ChangeStandingOrderDialog;
 
-import java.util.Observer;
-
 /**
  * A simple {@link Fragment} subclass.
  * create an instance of this fragment.
@@ -35,7 +33,7 @@ public class StandingOrderFragment extends Fragment implements ExpensesDBAdapter
 
     private StandingOrderAdapter adapter;
     private String LogKey = "StandingOrderFragment";
-    private Observer callback;
+    private StandingOrderListener callback;
 
     public StandingOrderFragment()
     {
@@ -47,7 +45,7 @@ public class StandingOrderFragment extends Fragment implements ExpensesDBAdapter
     {
         Log.d(LogKey, "On Attach Activity");
         super.onAttach(context);
-        callback = (Observer) context;
+        callback = (StandingOrderListener) context;
     }
 
     @Override
@@ -55,7 +53,7 @@ public class StandingOrderFragment extends Fragment implements ExpensesDBAdapter
     {
         Log.d(LogKey, "On Attach Context");
         super.onAttach(context);
-        callback = (Observer) context;
+        callback = (StandingOrderListener) context;
     }
 
     @Override
@@ -97,7 +95,7 @@ public class StandingOrderFragment extends Fragment implements ExpensesDBAdapter
                             {
                                 SQLiteFinanceHandler.updateStandingOrder(getActivity(), standingOrder, Installation.id(getContext()));
                                 FinanceUtilities.synchronizeOrder(getContext(), standingOrder);
-                                updateExpenses();
+                                updateFromStandingOrders();
                             }
                         });
                         changeStandingOrderDialog.show();
@@ -115,21 +113,31 @@ public class StandingOrderFragment extends Fragment implements ExpensesDBAdapter
     }
 
 
-    public void updateExpenses()
+    public void updateStandingOrders()
     {
         if (adapter != null)
         {
             adapter.updateStandingOrders();
         }
+    }
+
+    public void updateFromStandingOrders()
+    {
+        updateStandingOrders();
         if (callback != null)
         {
-            callback.update(null, null);
+            callback.updateFromStandingOrders();
         }
     }
 
     @Override
     public void onDelete()
     {
-        callback.update(null, null);
+        callback.updateFromStandingOrders();
+    }
+
+    public interface StandingOrderListener
+    {
+        void updateFromStandingOrders();
     }
 }
