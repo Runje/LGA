@@ -9,4 +9,10 @@
         <item name="android:divider">#ffffff</item>
         <item name="android:dividerHeight">1dp</item>
     </style>
+
+    <style name="LGATheme" parent="Theme.AppCompat">
+        <item name="colorPrimaryDark">@color/lga_primary_dark</item>
+        <item name="colorAccent">@color/lga_accent</item>
+        <item name="android:colorBackground">@color/background_material_dark</item>
+    </style>
 </resources>

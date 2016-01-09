@@ -15,6 +15,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
 
+import com.example.thomas.lga.Database.Filter;
 import com.example.thomas.lga.Database.SQLiteFinanceHandler;
 import com.example.thomas.lga.Finances.Expenses;
 import com.example.thomas.lga.Finances.FinanceUtilities;
@@ -179,6 +180,11 @@ public class ExpensesFragment extends Fragment implements ExpensesDBAdapter.Expe
     public void onDelete()
     {
         updateFromExpenses();
+    }
+
+    public void setFilter(Filter filter)
+    {
+        adapter.setFilter(filter);
     }
 
     public interface ExpensesListener

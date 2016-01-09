@@ -1,69 +1,64 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<FrameLayout
     android:id="@+id/activity_finance"
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="fill_parent"
-    android:background="@color/background_list"
     android:orientation="vertical"
     android:padding="10dp">
 
     <LinearLayout
-        android:id="@+id/overview_layout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:clickable="false"
-        android:focusable="true"
-        android:focusableInTouchMode="true"
-        android:orientation="vertical">
-        android:orientation="horizontal"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-
-        <include
-            android:id="@+id/overview_header"
-            layout="@layout/overview_header"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"/>
+            android:layout_height="match_parent"
+            android:orientation="vertical">
 
-        <ListView
-            android:id="@+id/list_overview"
+        <LinearLayout
+            android:id="@+id/overview_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:clickable="false"
-            tools:listitem="@layout/overview_base"/>
+            android:focusable="true"
+            android:focusableInTouchMode="true"
+            android:orientation="vertical">
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <include
+                android:id="@+id/overview_header"
+                layout="@layout/overview_header"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"/>
+
+            <ListView
+                android:id="@+id/list_overview"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:clickable="false"
+                tools:listitem="@layout/overview_base"/>
+
+        </LinearLayout>
+
+        <android.support.v4.view.ViewPager
+            android:id="@+id/statistics_pager"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginBottom="10dp"
+            android:layout_marginTop="10dp"
+            android:layout_weight="1">
+
+        </android.support.v4.view.ViewPager>
 
     </LinearLayout>
 
-    <android.support.v4.view.ViewPager
-        android:id="@+id/statistics_pager"
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/fab_add"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_marginBottom="10dp"
-        android:layout_marginTop="10dp"
-        android:layout_weight="1">
-
-        <android.support.v4.view.PagerTitleStrip
-            android:id="@+id/pager_title_strip"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="top"
-            android:background="#000000"
-            android:textColor="@color/text_list"
-            />
-    </android.support.v4.view.ViewPager>
-
-    <Button
-        android:id="@+id/button"
-        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginLeft="10dp"
-        android:background="@color/background_header"
+        android:layout_gravity="bottom|right"
         android:onClick="click_addCosts"
-        android:text="+"
-        android:textColor="@color/text_list"/>
+        android:src="@drawable/ic_add_white_18dp"/>
 
-</LinearLayout>
+</FrameLayout>

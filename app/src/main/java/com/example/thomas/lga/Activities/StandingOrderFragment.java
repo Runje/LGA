@@ -15,6 +15,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
 
+import com.example.thomas.lga.Database.Filter;
 import com.example.thomas.lga.Database.SQLiteFinanceHandler;
 import com.example.thomas.lga.Finances.FinanceUtilities;
 import com.example.thomas.lga.Finances.StandingOrder;
@@ -134,6 +135,11 @@ public class StandingOrderFragment extends Fragment implements ExpensesDBAdapter
     public void onDelete()
     {
         callback.updateFromStandingOrders();
+    }
+
+    public void setFilter(Filter filter)
+    {
+        adapter.setFilter(filter);
     }
 
     public interface StandingOrderListener

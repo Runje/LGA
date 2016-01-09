@@ -12,6 +12,7 @@ import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.TextView;
 
+import com.example.thomas.lga.Activities.BankAccountListener;
 import com.example.thomas.lga.Database.SQLiteFinanceHandler;
 import com.example.thomas.lga.Finances.Balance;
 import com.example.thomas.lga.Finances.BankAccount;
@@ -29,12 +30,14 @@ import java.util.List;
 public class BankAccountAdapter extends BaseAdapter
 {
     private final Context context;
+    private final BankAccountListener listener;
     private List<BankAccount> accounts;
 
 
-    public BankAccountAdapter(Context context)
+    public BankAccountAdapter(Context context, BankAccountListener listener)
     {
         this.context = context;
+        this.listener = listener;
         updateAccounts();
     }
 
@@ -129,7 +132,9 @@ public class BankAccountAdapter extends BaseAdapter
                     public void onClick(DialogInterface dialog, int which)
                     {
                         SQLiteFinanceHandler.deleteBankAccount(delete.getContext(), bankAccount);
+                        // TODO: delete its balances
                         updateAccounts();
+                        listener.updateFromBankAccounts();
                     }
                 });
                 builder.setNegativeButton(R.string.no, null);
@@ -149,6 +154,8 @@ public class BankAccountAdapter extends BaseAdapter
                     public void run()
                     {
                         updateAccounts();
+                        listener.updateFromBankAccounts();
+
                     }
                 });
                 dialog.show();

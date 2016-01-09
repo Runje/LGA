@@ -28,13 +28,15 @@ public class BalanceAdapter extends BaseAdapter
 {
     private final Context context;
     private final BankAccount account;
+    private final BalancesListener listener;
     private List<Balance> balances;
 
 
-    public BalanceAdapter(Context context, BankAccount account)
+    public BalanceAdapter(Context context, BankAccount account, BalancesListener balancesListener)
     {
         this.context = context;
         this.account = account;
+        this.listener = balancesListener;
         updateBalance();
     }
 
@@ -109,6 +111,10 @@ public class BalanceAdapter extends BaseAdapter
                     {
                         SQLiteFinanceHandler.deleteBalance(delete.getContext(), balance);
                         updateBalance();
+                        if (listener != null)
+                        {
+                            listener.balanceDeleted();
+                        }
                     }
                 });
                 builder.setNegativeButton(R.string.no, null);
@@ -137,5 +143,10 @@ public class BalanceAdapter extends BaseAdapter
     public void setBalances(List<Balance> balances)
     {
         this.balances = balances;
+    }
+
+    public interface BalancesListener
+    {
+        void balanceDeleted();
     }
 }

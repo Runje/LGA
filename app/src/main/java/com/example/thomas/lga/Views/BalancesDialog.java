@@ -13,6 +13,7 @@ import android.widget.ListView;
 import com.example.thomas.lga.Database.SQLiteFinanceHandler;
 import com.example.thomas.lga.Finances.Balance;
 import com.example.thomas.lga.Finances.BankAccount;
+import com.example.thomas.lga.Finances.FinanceUtilities;
 import com.example.thomas.lga.Installation;
 import com.example.thomas.lga.R;
 import com.example.thomas.lga.Views.Adapter.BalanceAdapter;
@@ -52,7 +53,15 @@ public class BalancesDialog
         });
 
         ListView listView = (ListView) layout.findViewById(R.id.list_expenses);
-        final BalanceAdapter adapter = new BalanceAdapter(context, account);
+        final BalanceAdapter adapter = new BalanceAdapter(context, account, new BalanceAdapter.BalancesListener()
+        {
+            @Override
+            public void balanceDeleted()
+            {
+
+                FinanceUtilities.updateBankAccountFromBalances(context, account);
+            }
+        });
         listView.setAdapter(adapter);
         listView.setLongClickable(true);
         listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener()
@@ -70,6 +79,7 @@ public class BalancesDialog
                     {
                         SQLiteFinanceHandler.updateBalance(context, balance1, Installation.id(context));
                         adapter.updateBalance();
+                        FinanceUtilities.updateBankAccountFromBalances(context, account);
                     }
                 });
 
@@ -91,12 +101,7 @@ public class BalancesDialog
                         SQLiteFinanceHandler.addBalance(context, balance);
                         adapter.updateBalance();
 
-                        if (!balance.getDate().isBefore(account.getDate()))
-                        {
-                            account.setBalance(balance.getBalance());
-                            account.setDate(balance.getDate());
-                            SQLiteFinanceHandler.updateBankAccount(context, account, Installation.id(context));
-                        }
+                        FinanceUtilities.updateBankAccountFromBalances(context, account);
                     }
                 });
                 addDialog.start();

@@ -100,4 +100,9 @@
     <string name="which_conflicted">Welchen Eintrag möchtest du übernehmen?</string>
     <string name="not_authorized_for_sync">Synchronisierung fehlgeschlagen: Nicht authorisiert</string>
     <string name="action_clean">Säubern</string>
+    <string name="statistics">Statistiken</string>
+    <string name="filter">Filter</string>
+    <string name="delete_filter">Filter löschen</string>
+    <string name="january">Januar</string>
+    <string name="action_filter">Filter</string>
 </resources>

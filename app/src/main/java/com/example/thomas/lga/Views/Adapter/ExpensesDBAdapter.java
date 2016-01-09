@@ -5,6 +5,7 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 
+import com.example.thomas.lga.Database.Filter;
 import com.example.thomas.lga.Database.SQLiteFinanceHandler;
 import com.example.thomas.lga.Finances.Expenses;
 import com.example.thomas.lga.R;
@@ -18,6 +19,8 @@ import java.util.List;
  */
 public class ExpensesDBAdapter extends ExpensesAdapter
 {
+    private Filter filter;
+
     public ExpensesDBAdapter(Context context, ExpensesDeleteListener listener)
     {
         super(context, listener);
@@ -26,7 +29,7 @@ public class ExpensesDBAdapter extends ExpensesAdapter
 
     public void updateExpenses()
     {
-        List<Expenses> expensesList = SQLiteFinanceHandler.getExpenses(context);
+        List<Expenses> expensesList = SQLiteFinanceHandler.getExpenses(context, filter);
 
         Collections.sort(expensesList, new Comparator<Expenses>()
         {
@@ -94,5 +97,16 @@ public class ExpensesDBAdapter extends ExpensesAdapter
         });
         builder.setNegativeButton(R.string.no, null);
         builder.create().show();
+    }
+
+    public Filter getFilter()
+    {
+        return filter;
+    }
+
+    public void setFilter(Filter filter)
+    {
+        this.filter = filter;
+        updateExpenses();
     }
 }

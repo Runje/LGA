@@ -12,6 +12,7 @@ import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.TextView;
 
+import com.example.thomas.lga.Database.Filter;
 import com.example.thomas.lga.Database.SQLiteFinanceHandler;
 import com.example.thomas.lga.Finances.StandingOrder;
 import com.example.thomas.lga.LGA;
@@ -29,6 +30,7 @@ public class StandingOrderAdapter extends BaseAdapter
     private final Context context;
     private ExpensesDBAdapter.ExpensesDeleteListener callback;
     private List<StandingOrder> standingOrders;
+    private Filter filter;
 
 
     public StandingOrderAdapter(Context context, ExpensesDBAdapter.ExpensesDeleteListener listener)
@@ -40,7 +42,7 @@ public class StandingOrderAdapter extends BaseAdapter
 
     public void updateStandingOrders()
     {
-        List<StandingOrder> standingOrderList = SQLiteFinanceHandler.getStandingOrders(context);
+        List<StandingOrder> standingOrderList = SQLiteFinanceHandler.getStandingOrders(context, filter);
 
         Collections.sort(standingOrderList, new Comparator<StandingOrder>()
         {
@@ -148,4 +150,14 @@ public class StandingOrderAdapter extends BaseAdapter
         this.standingOrders = standingOrders;
     }
 
+    public Filter getFilter()
+    {
+        return filter;
+    }
+
+    public void setFilter(Filter filter)
+    {
+        this.filter = filter;
+        updateStandingOrders();
+    }
 }

@@ -332,14 +332,50 @@ public class SQLiteFinanceHandler extends SQLiteOpenHelper
         StandingOrderTable.deleteForReal(deletedStandingOrders, db);
 
         // trim all entrys(name, category)
-        List<Balance> balances = BalanceTable.getAll(db);
+        /*List<Balance> balances = BalanceTable.getAll(db);
         BalanceTable.trim(balances, db);
         List<BankAccount> bankAccounts = BankAccountTable.getAll(db);
         BankAccountTable.trim(bankAccounts, db);
         List<Expenses> expenses = ExpensesTable.getAll(db);
         ExpensesTable.trim(expenses, db);
         List<StandingOrder> standingOrders = StandingOrderTable.getAll(db);
-        StandingOrderTable.trim(standingOrders, db);
+        StandingOrderTable.trim(standingOrders, db);*/
+
+        // rename categorys
+        /*List<String> filter = new ArrayList<String>();
+        filter.add("Other");
+        filter.add("Living");
+
+        List<String> replace = new ArrayList<String>();
+        replace.add("Sonstiges");
+        replace.add("Leben");
+        List<StandingOrder> expensesList = SQLiteFinanceHandler.getStandingOrders(context, filter);
+
+        for(StandingOrder expenses : expensesList)
+        {
+            if(expenses.getCategory().equals("Other"))
+            {
+                expenses.setCategory("Sonstiges");
+                SQLiteFinanceHandler.updateStandingOrder(context, expenses, Installation.id(context));
+            }
+
+            if(expenses.getCategory().equals("Living"))
+            {
+                expenses.setCategory("Leben");
+                SQLiteFinanceHandler.updateStandingOrder(context, expenses, Installation.id(context));
+            }
+        }*/
+
+        // make all standingOrders mine
+
+        // delete all expenses from standing orders
+        /*Filter filter = new Filter();
+        filter.setStandingOrder(Filter.YES);
+        List<Expenses> expensesList = SQLiteFinanceHandler.getExpenses(context, filter);
+        String myId = Installation.id(context);
+        ExpensesTable.deleteForReal(expensesList, db);*/
+
+
     }
 
     public static List<StandingOrder> getStandingOrdersToSync(Context context, DateTime date)
@@ -418,6 +454,65 @@ public class SQLiteFinanceHandler extends SQLiteOpenHelper
         SQLiteDatabase db = handler.getWritableDatabase();
         BalanceTable.overwrite(balance, db);
         db.close();
+    }
+
+    public static List<StandingOrder> getStandingOrders(Context context, Filter filter)
+    {
+        SQLiteFinanceHandler handler = new SQLiteFinanceHandler(context);
+        SQLiteDatabase db = handler.getReadableDatabase();
+        List<StandingOrder> standingOrders = StandingOrderTable.getFiltered(db, filter);
+        db.close();
+        return standingOrders;
+    }
+
+    public static List<Expenses> getExpenses(Context context, Filter filter)
+    {
+        if (filter == null)
+        {
+            return getExpenses(context);
+        }
+
+        SQLiteFinanceHandler handler = new SQLiteFinanceHandler(context);
+        SQLiteDatabase db = handler.getReadableDatabase();
+        List<Expenses> expenses = ExpensesTable.getFiltered(db, filter);
+        db.close();
+        return expenses;
+    }
+
+    public static String makePlaceholders(int len)
+    {
+        if (len < 1)
+        {
+            // It will lead to an invalid query anyway ..
+            throw new RuntimeException("No placeholders");
+        } else
+        {
+            StringBuilder sb = new StringBuilder(len * 2 - 1);
+            sb.append("?");
+            for (int i = 1; i < len; i++)
+            {
+                sb.append(",?");
+            }
+            return sb.toString();
+        }
+    }
+
+    public static Expenses getCompensationFrom(Context context, String name, DateTime dateTime)
+    {
+        SQLiteFinanceHandler handler = new SQLiteFinanceHandler(context);
+        SQLiteDatabase db = handler.getReadableDatabase();
+        Expenses expenses = ExpensesTable.getCompensationFrom(db, name, dateTime, context.getResources().getString(R.string.compensation));
+        db.close();
+        return expenses;
+    }
+
+    public static List<Expenses> getExpensesFromCategoryAndMonth(Context context, String category, DateTime date)
+    {
+        SQLiteFinanceHandler handler = new SQLiteFinanceHandler(context);
+        SQLiteDatabase db = handler.getReadableDatabase();
+        List<Expenses> expenses = ExpensesTable.getFromCategoryAndMonth(db, category, date);
+        db.close();
+        return expenses;
     }
 
     @Override

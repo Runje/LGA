@@ -2,6 +2,7 @@ package com.example.thomas.lga.Activities;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.ActionBar;
@@ -15,6 +16,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import com.devpaul.filepickerlibrary.FilePickerActivity;
+import com.example.thomas.lga.Database.Filter;
 import com.example.thomas.lga.Database.SQLiteFinanceHandler;
 import com.example.thomas.lga.Finances.Balance;
 import com.example.thomas.lga.Finances.BankAccount;
@@ -28,6 +30,7 @@ import com.example.thomas.lga.Views.Adapter.FinanceFragmentPagerAdapter;
 import com.example.thomas.lga.Views.Adapter.OverviewAdapter;
 import com.example.thomas.lga.Views.AddBankAccountDialog;
 import com.example.thomas.lga.Views.AddExpensesDialog;
+import com.example.thomas.lga.Views.FilterDialog;
 import com.example.thomas.lga.Views.PINDialog;
 
 import org.joda.time.DateTime;
@@ -38,7 +41,7 @@ import java.util.List;
 /**
  * Created by Thomas on 06.09.2015.
  */
-public class FinanceActivity extends AppCompatActivity implements ExpensesFragment.ExpensesListener, StandingOrderFragment.StandingOrderListener, BankAccountFragment.BankAccountListener, SyncListener
+public class FinanceActivity extends AppCompatActivity implements ExpensesFragment.ExpensesListener, StandingOrderFragment.StandingOrderListener, BankAccountListener, SyncListener, FilterDialog.FilterListener
 {
     public static final String DATABASE_NAME = "DB_NAME";
     private String LogKey = "FinanceActivity";
@@ -47,8 +50,11 @@ public class FinanceActivity extends AppCompatActivity implements ExpensesFragme
     private ViewPager pager;
     private int page;
     private boolean dialogIsVisible;
-    private ListView listView;
+    private ListView overviewList;
     private boolean overViewVisible = true;
+    private View overviewHeader;
+    private FloatingActionButton buttonAdd;
+    private Menu menu;
 
     @Override
     protected void onResume()
@@ -117,8 +123,9 @@ public class FinanceActivity extends AppCompatActivity implements ExpensesFragme
 
     private void init()
     {
-        listView = (ListView) findViewById(R.id.list_overview);
-
+        buttonAdd = (FloatingActionButton) findViewById(R.id.fab_add);
+        overviewHeader = findViewById(R.id.overview_header);
+        overviewList = (ListView) findViewById(R.id.list_overview);
         addFoldPossibility();
         TextView p1 = (TextView) findViewById(R.id.text_p1);
         TextView p2 = (TextView) findViewById(R.id.text_p2);
@@ -127,7 +134,7 @@ public class FinanceActivity extends AppCompatActivity implements ExpensesFragme
         p2.setText(names.get(1));
 
         overviewAdapter = new OverviewAdapter(this);
-        listView.setAdapter(overviewAdapter);
+        overviewList.setAdapter(overviewAdapter);
         FinanceUtilities.synchronizeWithStandingOrders(this, new Runnable()
         {
             @Override
@@ -144,9 +151,9 @@ public class FinanceActivity extends AppCompatActivity implements ExpensesFragme
             }
         });
 
-        listView.setClickable(false);
-        listView.setEnabled(false);
-        listView.setOnTouchListener(new View.OnTouchListener()
+        overviewList.setClickable(false);
+        overviewList.setEnabled(false);
+        overviewList.setOnTouchListener(new View.OnTouchListener()
         {
             @Override
             public boolean onTouch(View v, MotionEvent event)
@@ -176,15 +183,31 @@ public class FinanceActivity extends AppCompatActivity implements ExpensesFragme
                 {
                     case 0:
                         overviewAdapter.setMode(OverviewAdapter.Mode.Expenses);
+                        showFilterButton();
+                        showAddButton();
+                        overviewList.setVisibility(View.VISIBLE);
+                        overviewHeader.setVisibility(View.VISIBLE);
                         break;
                     case 1:
                         overviewAdapter.setMode(OverviewAdapter.Mode.StandingOrder);
+                        showFilterButton();
+                        showAddButton();
+                        overviewList.setVisibility(View.VISIBLE);
+                        overviewHeader.setVisibility(View.VISIBLE);
                         break;
                     case 2:
                         overviewAdapter.setMode(OverviewAdapter.Mode.BankAccount);
+                        showAddButton();
+                        hideFilterButon();
+                        overviewList.setVisibility(View.VISIBLE);
+                        overviewHeader.setVisibility(View.VISIBLE);
                         break;
                     case 3:
                         overviewAdapter.setMode(OverviewAdapter.Mode.BankAccount);
+                        hideFilterButon();
+                        hideAddButton();
+                        overviewList.setVisibility(View.GONE);
+                        overviewHeader.setVisibility(View.GONE);
                         break;
                 }
 
@@ -198,8 +221,7 @@ public class FinanceActivity extends AppCompatActivity implements ExpensesFragme
         });
 
 
-        // Specify that tabs should be displayed in the action bar.
-        getSupportActionBar().setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+
 
         // Create a tab listener that is called when the user changes tabs.
         ActionBar.TabListener tabListener = new ActionBar.TabListener()
@@ -223,6 +245,7 @@ public class FinanceActivity extends AppCompatActivity implements ExpensesFragme
         };
 
 
+        getSupportActionBar().removeAllTabs();
         // Add 3 tabs, specifying the tab's text and TabListener
         for (int i = 0; i < pageAdapter.getCount(); i++)
         {
@@ -231,12 +254,37 @@ public class FinanceActivity extends AppCompatActivity implements ExpensesFragme
                             .setText(pageAdapter.getPageTitle(i))
                             .setTabListener(tabListener));
         }
+
+        // Specify that tabs should be displayed in the action bar.
+        getSupportActionBar().setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+    }
+
+    private void hideAddButton()
+    {
+        buttonAdd.setVisibility(View.GONE);
+    }
+
+    private void hideFilterButon()
+    {
+        MenuItem item = menu.findItem(R.id.action_filter);
+        item.setVisible(false);
+    }
+
+    private void showAddButton()
+    {
+        buttonAdd.setVisibility(View.VISIBLE);
+    }
+
+    private void showFilterButton()
+    {
+        MenuItem item = menu.findItem(R.id.action_filter);
+        item.setVisible(true);
     }
 
 
     private void addFoldPossibility()
     {
-        findViewById(R.id.overview_header).setOnClickListener(new View.OnClickListener()
+        overviewHeader.setOnClickListener(new View.OnClickListener()
         {
             @Override
             public void onClick(View v)
@@ -244,15 +292,24 @@ public class FinanceActivity extends AppCompatActivity implements ExpensesFragme
                 overViewVisible = !overViewVisible;
                 if (overViewVisible)
                 {
-                    listView.setVisibility(View.VISIBLE);
+                    overviewList.setVisibility(View.VISIBLE);
                 } else
                 {
-                    listView.setVisibility(View.GONE);
+                    overviewList.setVisibility(View.GONE);
                 }
             }
         });
     }
 
+
+    public void click_filter()
+    {
+        if (page == 0 || page == 1)
+        {
+            FilterDialog dialog = new FilterDialog(this, this);
+            dialog.show();
+        }
+    }
 
     public void click_addCosts(View view)
     {
@@ -283,6 +340,7 @@ public class FinanceActivity extends AppCompatActivity implements ExpensesFragme
                         public void run()
                         {
                             updateExpenses();
+                            pageAdapter.getStandingOrderFragment().updateStandingOrders();
                         }
                     });
                 }
@@ -300,7 +358,7 @@ public class FinanceActivity extends AppCompatActivity implements ExpensesFragme
                     String myId = Installation.id(FinanceActivity.this);
                     SQLiteFinanceHandler.addBalance(FinanceActivity.this, new Balance(bankAccount.getBalance(), bankAccount.getDate(), bankAccount.getBank(), bankAccount.getName(), myId));
 
-                    pageAdapter.getBankAccountFragment().updateFromBankAccount();
+                    pageAdapter.getBankAccountFragment().updateFromBankAccounts();
                 }
             });
 
@@ -327,6 +385,7 @@ public class FinanceActivity extends AppCompatActivity implements ExpensesFragme
     {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_finance, menu);
+        this.menu = menu;
         return true;
     }
 
@@ -363,6 +422,11 @@ public class FinanceActivity extends AppCompatActivity implements ExpensesFragme
         if (id == R.id.action_clean)
         {
             SQLiteFinanceHandler.cleanDatabase(this);
+        }
+
+        if (id == R.id.action_filter)
+        {
+            click_filter();
         }
 
         return super.onOptionsItemSelected(item);
@@ -409,5 +473,12 @@ public class FinanceActivity extends AppCompatActivity implements ExpensesFragme
     {
         overviewAdapter.update();
 
+    }
+
+    @Override
+    public void onSelectCategorys(Filter filter)
+    {
+        pageAdapter.getStandingOrderFragment().setFilter(filter);
+        pageAdapter.getExpensesFragment().setFilter(filter);
     }
 }

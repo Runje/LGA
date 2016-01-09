@@ -17,6 +17,8 @@ import org.joda.time.Years;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -170,7 +172,7 @@ public class FinanceUtilities
         return first;
     }
 
-    private static OverviewItem getExpensesBetween(Context context, List<String> names, final DateTime start, final DateTime stop)
+    public static OverviewItem getExpensesBetween(Context context, List<String> names, final DateTime start, final DateTime stop)
     {
         return getTimeFrameOverview(SQLiteFinanceHandler.getExpenses(context), names, TimeFrame.LastMonth, new TimeFrameChecker()
         {
@@ -454,7 +456,11 @@ public class FinanceUtilities
                 List<StandingOrder> orders = SQLiteFinanceHandler.getStandingOrders(context);
                 for (StandingOrder order : orders)
                 {
-                    synchronizeOrder(context, order);
+                    // only synchronize own orders
+                    if (order.getCreatedFrom().equals(Installation.id(context)))
+                    {
+                        synchronizeOrder(context, order);
+                    }
                 }
 
                 runAfterSync.run();
@@ -698,9 +704,9 @@ public class FinanceUtilities
         List<Expenses> conflicts = new ArrayList<>();
         for (Expenses ex : expenses)
         {
-            if (ex.getName().equals(context.getString(R.string.compensation)) || ex.getLastChangeFrom().equals(myId))
+            if (ex.getName().equals(context.getString(R.string.compensation)) || ex.getLastChangeFrom().equals(myId) || ex.isStandingOrder() && ex.getCreatedFrom().equals(myId))
             {
-                // don't synchronize compensations
+                // don't synchronize compensations or created from me or standingOrders created from me
                 continue;
             }
 
@@ -998,6 +1004,52 @@ public class FinanceUtilities
         return false;
     }
 
+    public static void updateBankAccountFromBalances(Context context, BankAccount account)
+    {
+        List<Balance> balances = SQLiteFinanceHandler.getBalances(context, account);
+        if (balances.size() == 0)
+        {
+            updateBalancesFromAccount(context, account);
+            return;
+        }
+
+        Collections.sort(balances, new Comparator<Balance>()
+        {
+            @Override
+            public int compare(Balance lhs, Balance rhs)
+            {
+                return rhs.getDate().compareTo(lhs.getDate());
+            }
+        });
+
+        int i = 0;
+        Balance lastBalanceBeforeToday = balances.get(i);
+        while (lastBalanceBeforeToday.getDate().isAfter(DateTime.now()))
+        {
+            i++;
+            lastBalanceBeforeToday = balances.get(i);
+        }
+        account.setBalance(lastBalanceBeforeToday.getBalance());
+        account.setDate(lastBalanceBeforeToday.getDate());
+        SQLiteFinanceHandler.overwriteBankAccount(context, account);
+    }
+
+    public static void updateBalancesFromAccount(Context context, BankAccount bankAccount)
+    {
+        String myId = Installation.id(context);
+        Balance balance = FinanceUtilities.createBalanceFromAccount(bankAccount, myId);
+        Balance dbBalance = SQLiteFinanceHandler.findBalance(context, balance);
+        if (dbBalance != null)
+        {
+            // update entry
+            dbBalance.setBalance(dbBalance.getBalance());
+            SQLiteFinanceHandler.updateBalance(context, dbBalance, myId);
+        } else
+        {
+            // add new entry
+            SQLiteFinanceHandler.addBalance(context, balance);
+        }
+    }
 
 
     private interface TimeFrameChecker

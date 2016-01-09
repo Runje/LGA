@@ -281,4 +281,42 @@ public class StandingOrderTable
 
         return points;
     }
+
+    public static List<StandingOrder> getFiltered(SQLiteDatabase db, Filter filter)
+    {
+        if (filter == null || filter.getCategorys() == null || filter.getCategorys().size() == 0)
+        {
+            return getAll(db);
+        }
+
+        ArrayList<StandingOrder> standingOrders = new ArrayList<>();
+
+        String selectQuery = "SELECT * FROM " + TABLE_NAME + " WHERE " + KEY_DELETED + " = ?";
+        String[] args = new String[(filter.getCategorys() == null ? 0 : filter.getCategorys().size()) + 1];
+        args[0] = "0";
+        String categoryQuery = filter.getCategorys() == null || filter.getCategorys().size() == 0 ? "" : " AND " + KEY_CATEGORY + " IN (" + SQLiteFinanceHandler.makePlaceholders(filter.getCategorys().size()) + ")";
+        if (filter.getCategorys() != null)
+        {
+            selectQuery += categoryQuery;
+
+            for (int i = 1; i < args.length; i++)
+            {
+                args[i] = filter.getCategorys().get(i - 1);
+            }
+        }
+        Cursor cursor = db.rawQuery(selectQuery, args);
+
+        if (cursor.moveToFirst())
+        {
+            do
+            {
+                StandingOrder standingOrder = createStandingOrderFromCursor(cursor);
+                standingOrders.add(standingOrder);
+            } while (cursor.moveToNext());
+        }
+
+        cursor.close();
+
+        return standingOrders;
+    }
 }

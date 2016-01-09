@@ -8,6 +8,7 @@ import android.support.v4.app.FragmentStatePagerAdapter;
 import com.example.thomas.lga.Activities.BankAccountFragment;
 import com.example.thomas.lga.Activities.ExpensesFragment;
 import com.example.thomas.lga.Activities.StandingOrderFragment;
+import com.example.thomas.lga.Activities.StatisticsFragment_;
 import com.example.thomas.lga.R;
 
 import java.util.ArrayList;
@@ -30,6 +31,7 @@ public class FinanceFragmentPagerAdapter extends FragmentStatePagerAdapter
 
         fragments.add(new StandingOrderFragment());
         fragments.add(new BankAccountFragment());
+        fragments.add(new StatisticsFragment_());
 
     }
 
@@ -57,7 +59,7 @@ public class FinanceFragmentPagerAdapter extends FragmentStatePagerAdapter
             case 2:
                 return context.getResources().getString(R.string.bank_account);
             case 3:
-                return context.getResources().getString(R.string.balance);
+                return context.getResources().getString(R.string.statistics);
         }
 
         return super.getPageTitle(position);

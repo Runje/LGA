@@ -6,4 +6,7 @@
     <color name="text_list">#FFFFFFFF</color>
     <color name="negative_highlight">#ffff0000</color>
     <color name="positive_highlight">#ff00ff00</color>
+    <color name="lga_primary_dark">#060a71</color>
+    <color name="lga_accent">#4070ff</color>
+    <color name="background_material_dark">#303030</color>
 </resources>

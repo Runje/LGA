@@ -132,6 +132,88 @@ public class ExpensesTable
         return points;
     }
 
+    public static List<Expenses> getFiltered(SQLiteDatabase db, Filter filter)
+    {
+        if (filter == null || filter.getStandingOrder() == Filter.ALL && (filter.getCategorys() == null || filter.getCategorys().size() == 0))
+        {
+            return getAll(db);
+        }
+        ArrayList<Expenses> expenses = new ArrayList<>();
+
+        String selectQuery = "SELECT * FROM " + TABLE_NAME + " WHERE " + KEY_DELETED + " = ?";
+        // deleted
+        int length = 1;
+
+        // categorys
+        length += (filter.getCategorys() == null ? 0 : filter.getCategorys().size());
+
+        // standing order
+        length += filter.getStandingOrder() == Filter.ALL ? 0 : 1;
+        String[] args = new String[length];
+        args[0] = "0";
+        String categoryQuery = filter.getCategorys() == null || filter.getCategorys().size() == 0 ? "" : " AND " + KEY_CATEGORY + " IN (" + SQLiteFinanceHandler.makePlaceholders(filter.getCategorys().size()) + ")";
+        String standingOrderQuery = " AND " + KEY_STANDING_ORDER + " = ?";
+        boolean categorys = filter.getCategorys() != null && filter.getCategorys().size() != 0;
+        if (categorys && filter.getStandingOrder() == Filter.ALL)
+        {
+            selectQuery += categoryQuery;
+
+            for (int i = 1; i < filter.getCategorys().size() + 1; i++)
+            {
+                args[i] = filter.getCategorys().get(i - 1);
+            }
+        }
+        if (categorys && filter.getStandingOrder() == Filter.YES)
+        {
+            selectQuery += categoryQuery;
+            selectQuery += standingOrderQuery;
+            int j = 0;
+            for (int i = 0; i < filter.getCategorys().size(); i++)
+            {
+                args[i + 1] = filter.getCategorys().get(i);
+                j = i;
+            }
+
+            args[j + 1] = "1";
+        }
+
+        if (categorys && filter.getStandingOrder() == Filter.NO)
+        {
+            selectQuery += categoryQuery;
+            selectQuery += standingOrderQuery;
+            int j = 0;
+            for (int i = 0; i < filter.getCategorys().size(); i++)
+            {
+                args[i + 1] = filter.getCategorys().get(i);
+                j = i;
+            }
+
+            args[j + 1] = "0";
+        }
+
+        if (filter.getCategorys() == null || filter.getCategorys().size() == 0)
+        {
+            selectQuery += standingOrderQuery;
+
+            args[1] = filter.getStandingOrder() == Filter.YES ? "1" : "0";
+        }
+
+        Cursor cursor = db.rawQuery(selectQuery, args);
+
+        if (cursor.moveToFirst())
+        {
+            do
+            {
+                Expenses expenses1 = createExpensesFromCursor(cursor);
+                expenses.add(expenses1);
+            } while (cursor.moveToNext());
+        }
+
+        cursor.close();
+
+        return expenses;
+    }
+
     public static ArrayList<Expenses> getPoints(SQLiteDatabase db, String name)
     {
         ArrayList<Expenses> points = new ArrayList<>();
@@ -351,5 +433,65 @@ public class ExpensesTable
             ContentValues values = expensesToValues(expenses);
             int i = db.update(TABLE_NAME, values, KEY_ID + " = " + expenses.getId(), null);
         }
+    }
+
+    public static Expenses getCompensationFrom(SQLiteDatabase db, String name, DateTime dateTime, String compensation)
+    {
+        DateTime start = dateTime.withDayOfMonth(1).withHourOfDay(0).withMinuteOfHour(0).withSecondOfMinute(0).withMillisOfSecond(0);
+        DateTime stop = dateTime.dayOfMonth().withMaximumValue().withHourOfDay(23).withMinuteOfHour(59).withSecondOfMinute(59).withMillisOfSecond(999);
+        String selectQuery = "SELECT * FROM " + TABLE_NAME + " WHERE " + KEY_DELETED + " = ? AND " + KEY_WHO + " = ? AND " + KEY_DATE + " BETWEEN ? AND ? AND " + KEY_NAME + " = ?";
+
+        Cursor cursor = db.rawQuery(selectQuery, new String[]{"0", name, Long.toString(start.getMillis()), Long.toString(stop.getMillis()), compensation});
+
+        Expenses result = null;
+        if (cursor.moveToFirst())
+        {
+            result = createExpensesFromCursor(cursor);
+        }
+
+        cursor.close();
+        return result;
+    }
+
+    public static List<Expenses> getFromCategoryAndMonth(SQLiteDatabase db, String category, DateTime date)
+    {
+        ArrayList<Expenses> expensesArrayList = new ArrayList<>();
+
+        String selectQuery = "SELECT * FROM " + TABLE_NAME + " WHERE " + KEY_DELETED + " = ? AND " + KEY_CATEGORY + " = ?";
+        String dateQuery = " AND " + KEY_DATE + " BETWEEN ? AND ?";
+        int dateLength = 0;
+        if (date != null)
+        {
+            dateLength = 2;
+        }
+        int length = 2 + dateLength;
+        String[] args = new String[length];
+        args[0] = "0";
+        args[1] = category;
+
+        if (date != null)
+        {
+            DateTime start = date.withDayOfMonth(1).withHourOfDay(0).withMinuteOfHour(0).withSecondOfMinute(0).withMillisOfSecond(0);
+            DateTime stop = date.dayOfMonth().withMaximumValue().withHourOfDay(23).withMinuteOfHour(59).withSecondOfMinute(59).withMillisOfSecond(999);
+            args[2] = Long.toString(start.getMillis());
+            args[3] = Long.toString(stop.getMillis());
+
+            selectQuery += dateQuery;
+        }
+
+        Cursor cursor = db.rawQuery(selectQuery, args);
+
+        if (cursor.moveToFirst())
+        {
+            do
+            {
+                Expenses b = createExpensesFromCursor(cursor);
+                expensesArrayList.add(b);
+            } while (cursor.moveToNext());
+        }
+
+        cursor.close();
+
+        return expensesArrayList;
     }
 }
