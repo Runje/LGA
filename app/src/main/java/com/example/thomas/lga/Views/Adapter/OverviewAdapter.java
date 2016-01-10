@@ -59,7 +59,7 @@ public class OverviewAdapter extends BaseAdapter
                     List<Expenses> expenses = SQLiteFinanceHandler.getExpenses(context);
                     final OverviewItem thisMonth = FinanceUtilities.getThisMonthOverview(expenses, LGA.getSingleton().getNames());
                     final OverviewItem lastMonth = FinanceUtilities.getLastMonthOverview(expenses, LGA.getSingleton().getNames());
-                    final OverviewItem averageMonth = FinanceUtilities.getAverageMonthOverview(expenses, LGA.getSingleton().getNames());
+                    final OverviewItem averageMonth = FinanceUtilities.getAverageMonthOverview(expenses, LGA.getSingleton().getNames(), LGA.getSingleton().getStartDate());
                     final OverviewItem debts = FinanceUtilities.getDebtsOverview(expenses, LGA.getSingleton().getNames());
 
                     ((Activity) context).runOnUiThread(new Runnable()

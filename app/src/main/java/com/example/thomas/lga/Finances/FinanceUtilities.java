@@ -87,14 +87,14 @@ public class FinanceUtilities
         editor.commit();
     }
 
-    public static OverviewItem getOverallOverview(List<Expenses> expenses, List<String> names)
+    public static OverviewItem getOverallOverview(List<Expenses> expenses, List<String> names, final DateTime startTime)
     {
         return getTimeFrameOverview(expenses, names, TimeFrame.Overall, new TimeFrameChecker()
         {
             @Override
             public boolean isValid(DateTime time)
             {
-                return true;
+                return !time.isBefore(startTime) && !time.isAfter(DateTime.now().minusMonths(1).dayOfMonth().withMaximumValue().withHourOfDay(23).withMinuteOfHour(59).withSecondOfMinute(59).withMillisOfSecond(999));
             }
         });
     }
@@ -147,11 +147,11 @@ public class FinanceUtilities
         });
     }
 
-    public static OverviewItem getAverageMonthOverview(List<Expenses> expenses, List<String> names)
+    public static OverviewItem getAverageMonthOverview(List<Expenses> expenses, List<String> names, DateTime startDate)
     {
-        OverviewItem overall = getOverallOverview(expenses, names);
+        OverviewItem overall = getOverallOverview(expenses, names, startDate);
         DateTime first = getFirstDate(expenses);
-        int months = Months.monthsBetween(first.withDayOfMonth(1).withHourOfDay(0).withMinuteOfHour(0).withSecondOfMinute(0).withMillisOfSecond(0), DateTime.now()).getMonths() + 1;
+        int months = Months.monthsBetween(startDate.withDayOfMonth(1).withHourOfDay(0).withMinuteOfHour(0).withSecondOfMinute(0).withMillisOfSecond(0), DateTime.now()).getMonths();
 
         overall.divide(months);
         overall.setTime(TimeFrame.AverageMonth);

@@ -64,7 +64,7 @@ public class FinanceActivity extends AppCompatActivity implements ExpensesFragme
         final View all = findViewById(R.id.activity_finance);
         all.setVisibility(View.INVISIBLE);
 
-        PINDialog dialog = new PINDialog(this, "1234", new PINDialog.onExitListener()
+        PINDialog dialog = new PINDialog(this, "1031", new PINDialog.onExitListener()
         {
             @Override
             public void onExit()

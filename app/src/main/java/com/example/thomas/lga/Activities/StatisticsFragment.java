@@ -167,7 +167,6 @@ public class StatisticsFragment extends Fragment
                         spinnerDate.setVisibility(View.GONE);
                         piechart.setVisibility(View.GONE);
 
-                        spinnerWhoPosition = 0;
                         spinnerDatePosition = 0;
 
                         initCompensation();
@@ -177,6 +176,7 @@ public class StatisticsFragment extends Fragment
                         piechart.setVisibility(View.VISIBLE);
                         lineChart.setVisibility(View.GONE);
                         spinnerWho.setVisibility(View.VISIBLE);
+                        spinnerDate.setVisibility(View.VISIBLE);
                         DateTime start = LGA.getSingleton().getStartDate().withDayOfMonth(1);
                         DateTime stop = DateTime.now().withDayOfMonth(1);
                         int months = Months.monthsBetween(start, stop).getMonths();
@@ -189,7 +189,6 @@ public class StatisticsFragment extends Fragment
                         }
 
                         spinnerDateItems = dates;
-                        spinnerWhoPosition = 0;
                         spinnerDatePosition = 0;
                         spinnerDate.setAdapter(new ArrayAdapter<String>(getContext(), R.layout.support_simple_spinner_dropdown_item, spinnerDateItems));
                         initExpenses();
@@ -291,7 +290,7 @@ public class StatisticsFragment extends Fragment
 
         ArrayList<String> xVals = new ArrayList<>();
         String name = names.get(spinnerWhoPosition);
-        for (int i = 0; i < months; i++)
+        for (int i = 0; i < months + 1; i++)
         {
             DateTime date = start.plusMonths(1);
             xVals.add(start.toString("MM/yy"));
@@ -303,28 +302,32 @@ public class StatisticsFragment extends Fragment
                 Expenses compensation1 = SQLiteFinanceHandler.getCompensationFrom(getContext(), names.get(0), start);
                 Expenses compensation2 = SQLiteFinanceHandler.getCompensationFrom(getContext(), names.get(1), start);
                 compensation = compensation1;
-                compensation.setCosts(compensation1.getCosts() + compensation2.getCosts());
+                if (compensation != null)
+                {
+                    compensation.setCosts(compensation1.getCosts() + compensation2.getCosts());
+                }
             }
             float owningsDiff = 0;
             float expensesWithoutCompensation = 0;
+            float compensationCosts = compensation == null ? 0 : compensation.getCosts();
             switch (spinnerWhoPosition)
             {
                 case 0:
                     owningsDiff = ownings.getP1() - lastOwnings.getP1();
-                    expensesWithoutCompensation = lastExpenses.getP1() - compensation.getCosts();
+                    expensesWithoutCompensation = lastExpenses.getP1() - compensationCosts;
                     break;
                 case 1:
                     owningsDiff = ownings.getP2() - lastOwnings.getP2();
-                    expensesWithoutCompensation = lastExpenses.getP2() - compensation.getCosts();
+                    expensesWithoutCompensation = lastExpenses.getP2() - compensationCosts;
                     break;
                 case 2:
                     owningsDiff = ownings.getAll() - lastOwnings.getAll();
-                    expensesWithoutCompensation = lastExpenses.getAll() - compensation.getCosts();
+                    expensesWithoutCompensation = lastExpenses.getAll() - compensationCosts;
                     break;
             }
             thomasYOwnings.add(new BarEntry(owningsDiff, i));
             thomasYExpenses.add(new BarEntry(expensesWithoutCompensation, i));
-            thomasYCompensation.add(new BarEntry(compensation.getCosts(), i));
+            thomasYCompensation.add(new BarEntry(compensationCosts, i));
 
             start = date;
             lastOwnings = ownings;
@@ -337,6 +340,7 @@ public class StatisticsFragment extends Fragment
         thomasCompensationSet.setColor(Color.GREEN);
         thomasCompensationSet.setValueTextColor(Color.WHITE);
         BarDataSet thomasExpensesSet = new BarDataSet(thomasYExpenses, getContext().getResources().getString(R.string.expenses));
+        thomasExpensesSet.setValueTextColor(Color.WHITE);
         ArrayList<BarDataSet> dataSets = new ArrayList<>();
         dataSets.add(thomasExpensesSet);
         dataSets.add(thomasOwningsSet);
